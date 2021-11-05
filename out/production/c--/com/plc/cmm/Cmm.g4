@@ -1,22 +1,20 @@
 grammar Cmm;
 //TODO: Other variables type
 
-program   : (func_dec | global |struct_dec)* main;
+program   : (func_dec | declaration |struct_dec)* main;
 
 
-func_dec: VAR_DATA_TYPES NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAME END | RETURN NAME)
-            |
-            VOID NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
-                        ;
+func_dec: {int a;}VAR_DATA_TYPES a=NAME LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAME END | RETURN NAME)
+            {System.out.println("FunctionDec: "+$a.text);}|
+            {int a;}VOID a=NAME LPAREN (argument ',')* (argument) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
+            {System.out.println("FunctionDec: "+$a.text);};
 
 
 VAR_DATA_TYPES:(INT | STRING  | LIST | BOOL);
 
 
-struct_dec: STRUCT NAME (BEGIN (VAR_DATA_TYPES NAME)* END | VAR_DATA_TYPES NAME);
-
-global: (VAR_DATA_TYPES  | STRUCT NAME)NAME SEMICOLON;
-
+struct_dec: {int a, b;}STRUCT a=NAME (BEGIN (VAR_DATA_TYPES NAME | STRUCT b=NAME)* END | (VAR_DATA_TYPES | STRUCT b=NAME))
+{System.out.println("StructDec: "+$a.text);}; //TODO error handeling if a == b
 
 main: MAIN BEGIN
                     declaration*
@@ -24,9 +22,11 @@ main: MAIN BEGIN
                     END
                     ;
 
-declaration   : (VAR_DATA_TYPES | (STRUCT NAME)) NAME SEMICOLON ;
+declaration   : {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME SEMICOLON
+                    {System.out.println("VarDec: "+$a.text);};
 
-
+argument: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME
+                              {System.out.println("VarDec: "+$a.text);};
 
 statement      :
                ifstmt

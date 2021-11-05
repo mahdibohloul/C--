@@ -1,7 +1,11 @@
 int i;
 
+struct ab begin
+int hi
+end
+
 bool checkpass (struct student std, int ca, struct z za) begin
- int a;
+ int c;
  return name
  end
 
