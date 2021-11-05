@@ -28,6 +28,16 @@ public interface CmmListener extends ParseTreeListener {
 	 */
 	void exitFunc_dec(CmmParser.Func_decContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link CmmParser#struct_dec}.
+	 * @param ctx the parse tree
+	 */
+	void enterStruct_dec(CmmParser.Struct_decContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CmmParser#struct_dec}.
+	 * @param ctx the parse tree
+	 */
+	void exitStruct_dec(CmmParser.Struct_decContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link CmmParser#global}.
 	 * @param ctx the parse tree
 	 */
