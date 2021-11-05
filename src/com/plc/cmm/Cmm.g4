@@ -1,10 +1,10 @@
 grammar Cmm;
-
+//TODO: Other variables type
 
 program   : global* | func_dec*  | main;
 
 
-func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END;
+func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END; //TODO: return func
 
 
 global: INT NAME SEMICOLON;
