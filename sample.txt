@@ -1,7 +1,14 @@
 int i;
 
 struct ab begin
-int hi
+int area(int area) begin
+        set begin
+            area = area;
+            price = 1000 + area;
+        end
+        get
+            return area
+     end
 end
 
 bool checkpass (struct student std, int ca, struct z za) begin

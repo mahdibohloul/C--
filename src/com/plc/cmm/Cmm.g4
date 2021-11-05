@@ -1,5 +1,8 @@
 grammar Cmm;
 //TODO: Other variables type
+//TODO: semicolon problem
+//TODO other op '*''/''-'
+//TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
 
 program   : (func_dec | declaration |struct_dec)* main;
 
@@ -13,8 +16,14 @@ func_dec: {int a;}VAR_DATA_TYPES a=NAME LPAREN (argument ',')* (argument) RPAREN
 VAR_DATA_TYPES:(INT | STRING  | LIST | BOOL);
 
 
-struct_dec: {int a, b;}STRUCT a=NAME (BEGIN (VAR_DATA_TYPES NAME | STRUCT b=NAME)* END | (VAR_DATA_TYPES | STRUCT b=NAME))
-{System.out.println("StructDec: "+$a.text);}; //TODO error handeling if a == b
+struct_dec: {int a;}STRUCT a=NAME (BEGIN (struct_body)* END | struct_body)
+{System.out.println("StructDec: "+$a.text);};
+
+
+struct_body: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME{System.out.println("VarDec: "+$a.text);} | (
+            (VAR_DATA_TYPES | (STRUCT NAME)) a=NAME {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
+);
+
 
 main: MAIN BEGIN
                     declaration*
@@ -22,11 +31,13 @@ main: MAIN BEGIN
                     END
                     ;
 
+getter_setter: BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAME END;
+
 declaration   : {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME SEMICOLON
                     {System.out.println("VarDec: "+$a.text);};
 
 argument: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME
-                              {System.out.println("VarDec: "+$a.text);};
+                              {System.out.println("ArgumentDec: "+$a.text);};
 
 statement      :
                ifstmt

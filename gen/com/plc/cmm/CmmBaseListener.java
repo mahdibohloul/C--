@@ -52,6 +52,18 @@ public class CmmBaseListener implements CmmListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterStruct_body(CmmParser.Struct_bodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStruct_body(CmmParser.Struct_bodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterMain(CmmParser.MainContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -59,6 +71,18 @@ public class CmmBaseListener implements CmmListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMain(CmmParser.MainContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterGetter_setter(CmmParser.Getter_setterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitGetter_setter(CmmParser.Getter_setterContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -29,11 +29,23 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStruct_dec(CmmParser.Struct_decContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CmmParser#struct_body}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStruct_body(CmmParser.Struct_bodyContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CmmParser#main}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitMain(CmmParser.MainContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#getter_setter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGetter_setter(CmmParser.Getter_setterContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#declaration}.
 	 * @param ctx the parse tree
