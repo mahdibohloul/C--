@@ -1,5 +1,10 @@
 int i;
 
+struct hey begin
+int zart
+string va
+end
+
 main() begin
 int a;
 int b;

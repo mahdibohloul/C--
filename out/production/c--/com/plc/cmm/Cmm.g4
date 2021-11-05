@@ -1,24 +1,29 @@
 grammar Cmm;
+//TODO: Other variables type
+
+program   : global* | func_dec*  | struct_dec* | main;
 
 
-program   : global* | func_dec*  | main;
+func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END; //TODO: return func
 
+VAR_DATA_TYPES:(INT | STRING | STRUCT | LIST | BOOL);
 
-func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END;
-
+struct_dec: STRUCT NAME BEGIN (VAR_DATA_TYPES NAME SEMICOLON)* END;
 
 global: INT NAME SEMICOLON;
 
 
-main: 'main()' BEGIN
+main: MAIN BEGIN
                     declaration*
                     statement*
                     END
                     ;
 
-declaration   :
-              INT NAME SEMICOLON
-              ;
+declaration   : var_dec;
+
+
+var_dec: VAR_DATA_TYPES NAME SEMICOLON;
+
 
 
 statement      :
@@ -64,8 +69,24 @@ integer      : INTEGER  ;
 
 IF: 'if';
 ENDIF: 'endif';
+MAIN: 'main()';
+DO: 'do';
+RETURN: 'return';
+GET: 'get';
+SET: 'set';
+APPEND: 'append';
+SIZE: 'size';
+TRUE: 'true';
+FALSE: 'false';
+FPTR: 'fptr';
 DISPLAY: 'display';
 INT: 'int';
+STRING: 'string';
+STRUCT: 'struct';
+BOOL: 'bool';
+LIST: 'list';
+VOID: 'void';
+WHILE: 'while';
 PLUS: '+';
 EQUAL: '==';
 ASSIGN: '=';
