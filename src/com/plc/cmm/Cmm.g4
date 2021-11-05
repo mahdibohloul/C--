@@ -1,12 +1,20 @@
 grammar Cmm;
 
 
-program       : 'main()''begin'
-              declaration*
-              statement*
-              'end'
-              ;
+program   : global* | func_dec*  | main;
 
+
+func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END;
+
+
+global: INT NAME SEMICOLON;
+
+
+main: 'main()' BEGIN
+                    declaration*
+                    statement*
+                    END
+                    ;
 
 declaration   :
               INT NAME SEMICOLON
@@ -58,12 +66,12 @@ IF: 'if';
 ENDIF: 'endif';
 DISPLAY: 'display';
 INT: 'int';
-
 PLUS: '+';
 EQUAL: '==';
 ASSIGN: '=';
 NOTEQUAL: '!=';
-
+BEGIN: 'begin';
+END: 'end';
 SEMICOLON: ';';
 LPAREN: '(';
 RPAREN: ')';
