@@ -1,9 +1,9 @@
 int i;
 
-struct hey begin
-int zart
-string va
-end
+bool checkpass (struct student std, int ca, struct z za) begin
+ int a;
+ return name
+ end
 
 main() begin
 int a;
