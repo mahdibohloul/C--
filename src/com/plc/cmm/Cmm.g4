@@ -1,16 +1,23 @@
 grammar Cmm;
 //TODO: Other variables type
 
-program   : global* | func_dec*  | struct_dec* | main;
+program   : (func_dec | global)* main;
 
 
-func_dec: INT NAME LPAREN term* RPAREN BEGIN declaration* statement* END; //TODO: return func
+func_dec: VAR_DATA_TYPES NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN BEGIN declaration* statement* RETURN NAME END
+            |
+            VOID NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN BEGIN declaration* statement* END
+            |
+            VOID NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN (declaration | statement)
+                        |
+                       VAR_DATA_TYPES NAME LPAREN ((VAR_DATA_TYPES NAME | STRUCT NAME NAME) ',')* ((VAR_DATA_TYPES | STRUCT NAME) NAME) RPAREN RETURN NAME
+                        ;
 
-VAR_DATA_TYPES:(INT | STRING | STRUCT | LIST | BOOL);
 
-struct_dec: STRUCT NAME BEGIN (VAR_DATA_TYPES NAME SEMICOLON)* END;
+VAR_DATA_TYPES:(INT | STRING  | LIST | BOOL);
 
-global: INT NAME SEMICOLON;
+
+global: (VAR_DATA_TYPES  | STRUCT NAME)NAME SEMICOLON;
 
 
 main: MAIN BEGIN
@@ -19,10 +26,7 @@ main: MAIN BEGIN
                     END
                     ;
 
-declaration   : var_dec;
-
-
-var_dec: VAR_DATA_TYPES NAME SEMICOLON;
+declaration   : VAR_DATA_TYPES NAME SEMICOLON;
 
 
 
