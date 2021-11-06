@@ -1,4 +1,4 @@
-// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
+// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
 package com.plc.cmm;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -16,13 +16,13 @@ public class CmmBaseListener implements CmmListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterProgram(CmmParser.ProgramContext ctx) { }
+	@Override public void enterCmm(CmmParser.CmmContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitProgram(CmmParser.ProgramContext ctx) { }
+	@Override public void exitCmm(CmmParser.CmmContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

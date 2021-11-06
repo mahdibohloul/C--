@@ -1,7 +1,10 @@
 grammar Cmm;
 //TODO: Other variables type
+//TODO: semicolon problem
+//TODO other op '*''/''-'
+//TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
 
-program   : (func_dec | declaration |struct_dec)* main;
+cmm   : (func_dec | declaration |struct_dec)* main;
 
 
 func_dec: {int a;}VAR_DATA_TYPES a=NAME LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAME END | RETURN NAME)

@@ -1,4 +1,4 @@
-// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
+// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
 package com.plc.cmm;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CmmParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.9.2", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.9.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -23,13 +23,13 @@ public class CmmParser extends Parser {
 		ASSIGN=25, NOTEQUAL=26, BEGIN=27, END=28, SEMICOLON=29, LPAREN=30, RPAREN=31, 
 		INTEGER=32, NAME=33, WS=34;
 	public static final int
-		RULE_program = 0, RULE_func_dec = 1, RULE_struct_dec = 2, RULE_struct_body = 3, 
+		RULE_cmm = 0, RULE_func_dec = 1, RULE_struct_dec = 2, RULE_struct_body = 3, 
 		RULE_main = 4, RULE_getter_setter = 5, RULE_declaration = 6, RULE_argument = 7, 
 		RULE_statement = 8, RULE_ifstmt = 9, RULE_display = 10, RULE_assignstmt = 11, 
 		RULE_expression = 12, RULE_term = 13, RULE_identifier = 14, RULE_integer = 15;
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"program", "func_dec", "struct_dec", "struct_body", "main", "getter_setter", 
+			"cmm", "func_dec", "struct_dec", "struct_body", "main", "getter_setter", 
 			"declaration", "argument", "statement", "ifstmt", "display", "assignstmt", 
 			"expression", "term", "identifier", "integer"
 		};
@@ -106,7 +106,7 @@ public class CmmParser extends Parser {
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 
-	public static class ProgramContext extends ParserRuleContext {
+	public static class CmmContext extends ParserRuleContext {
 		public MainContext main() {
 			return getRuleContext(MainContext.class,0);
 		}
@@ -128,28 +128,28 @@ public class CmmParser extends Parser {
 		public Struct_decContext struct_dec(int i) {
 			return getRuleContext(Struct_decContext.class,i);
 		}
-		public ProgramContext(ParserRuleContext parent, int invokingState) {
+		public CmmContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_program; }
+		@Override public int getRuleIndex() { return RULE_cmm; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof CmmListener ) ((CmmListener)listener).enterProgram(this);
+			if ( listener instanceof CmmListener ) ((CmmListener)listener).enterCmm(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof CmmListener ) ((CmmListener)listener).exitProgram(this);
+			if ( listener instanceof CmmListener ) ((CmmListener)listener).exitCmm(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof CmmVisitor ) return ((CmmVisitor<? extends T>)visitor).visitProgram(this);
+			if ( visitor instanceof CmmVisitor ) return ((CmmVisitor<? extends T>)visitor).visitCmm(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 
-	public final ProgramContext program() throws RecognitionException {
-		ProgramContext _localctx = new ProgramContext(_ctx, getState());
-		enterRule(_localctx, 0, RULE_program);
+	public final CmmContext cmm() throws RecognitionException {
+		CmmContext _localctx = new CmmContext(_ctx, getState());
+		enterRule(_localctx, 0, RULE_cmm);
 		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);

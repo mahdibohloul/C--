@@ -1,4 +1,4 @@
-// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
+// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
 package com.plc.cmm;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -11,11 +11,11 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link CmmParser#program}.
+	 * Visit a parse tree produced by {@link CmmParser#cmm}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitProgram(CmmParser.ProgramContext ctx);
+	T visitCmm(CmmParser.CmmContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#func_dec}.
 	 * @param ctx the parse tree

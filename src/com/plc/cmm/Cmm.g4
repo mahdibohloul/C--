@@ -4,25 +4,24 @@ grammar Cmm;
 //TODO other op '*''/''-'
 //TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
 
-program   : (func_dec | declaration |struct_dec)* main;
+cmm : (struct_dec)* (func_dec)* main;
 
 
-func_dec: {int a;}VAR_DATA_TYPES a=NAME LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAME END | RETURN NAME)
+func_dec: {int a;}BUILT_IN_DATA_TYPE a=NAMING_CONVENTION LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAMING_CONVENTION END | RETURN NAMING_CONVENTION)
             {System.out.println("FunctionDec: "+$a.text);}|
-            {int a;}VOID a=NAME LPAREN (argument ',')* (argument) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
+            {int a;}VOID a=NAMING_CONVENTION LPAREN (argument ',')* (argument) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
             {System.out.println("FunctionDec: "+$a.text);};
 
 
-VAR_DATA_TYPES:(INT | STRING  | LIST | BOOL);
-
-
-struct_dec: {int a;}STRUCT a=NAME (BEGIN (struct_body)* END | struct_body)
+struct_dec: {int a;}STRUCT a=NAMING_CONVENTION (BEGIN (struct_body)* END | struct_body)
 {System.out.println("StructDec: "+$a.text);};
 
 
-struct_body: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME{System.out.println("VarDec: "+$a.text);} | (
-            (VAR_DATA_TYPES | (STRUCT NAME)) a=NAME {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
-);
+//struct_body: ({int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION{System.out.println("VarDec: "+$a.text);} | (
+//            (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
+//);
+
+struct_body: declaration
 
 
 main: MAIN BEGIN
@@ -31,18 +30,18 @@ main: MAIN BEGIN
                     END
                     ;
 
-getter_setter: BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAME END;
+getter_setter: BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAMING_CONVENTION END;
 
-declaration   : {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME SEMICOLON
+declaration   : {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
                     {System.out.println("VarDec: "+$a.text);};
 
-argument: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME
+argument: {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
                               {System.out.println("ArgumentDec: "+$a.text);};
 
 statement      :
                ifstmt
              | display
-             | assignstmt
+             | assignsment
                ;
 
 
@@ -54,53 +53,73 @@ ifstmt      :
 
 
 display      :
-               DISPLAY LPAREN term RPAREN SEMICOLON;
+               DISPLAY LPAREN expression RPAREN SEMICOLON;
 
 
-assignstmt : NAME ASSIGN expression SEMICOLON
+assignsment : NAMING_CONVENTION ASSIGN expression
                 ;
 
 
 expression      :
-                term
-              |
-                term PLUS term
+                  term
+                  |
+                  term PRODUCT term
+                  |
+                  term DIVIDE term
+                  |
+                  term SUM term
+                  |
+                  term SUBTRACT term
                 ;
 
 
 term          :
-              identifier
-            | integer
+                  identifier
+                  |
+                  integer
               ;
 
 
-identifier   : NAME  ;
+identifier   : NAMING_CONVENTION  ;
 
 
 integer      : INTEGER  ;
 
+comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
-IF: 'if';
-ENDIF: 'endif';
-MAIN: 'main()';
-DO: 'do';
-RETURN: 'return';
-GET: 'get';
-SET: 'set';
+/// DATA TYPE
+BUILT_IN_DATA_TYPE:(INT | STRING  | LIST | BOOL | FPTR);
+STRUCT_DATA_TYPE: STRUCT;
+
+
+
+
+
 APPEND: 'append';
 SIZE: 'size';
 TRUE: 'true';
 FALSE: 'false';
 FPTR: 'fptr';
 DISPLAY: 'display';
-INT: 'int';
 STRING: 'string';
 STRUCT: 'struct';
+MAIN: 'main';
+INT: 'int';
 BOOL: 'bool';
 LIST: 'list';
 VOID: 'void';
 WHILE: 'while';
-PLUS: '+';
+DO: 'do';
+IF: 'if';
+ENDIF: 'endif';
+ELSE: 'else';
+RETURN: 'return';
+GET: 'get';
+SET: 'set';
+SUM: '+';
+PRODUCT: '*';
+SUBTRACT: '-';
+DIVIDE: '/';
 EQUAL: '==';
 ASSIGN: '=';
 NOTEQUAL: '!=';
@@ -109,9 +128,16 @@ END: 'end';
 SEMICOLON: ';';
 LPAREN: '(';
 RPAREN: ')';
+UNDERLINE: '_';
+EXCLUDE: '?!';
+
+KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
+KEYWORDS_EXCLUDE : (EXCLUDE APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 
 INTEGER: [0-9][0-9]*;
 
-NAME: [a-z]+;
+ALPHABET: ([a-z]|[A-Z])+;
+
+NAMING_CONVENTION: '^'(KEYWORDS_EXCLUDE)(ALPHABET | UNDERLINE)+ (ALPHABET | UNDERLINE | INTEGER)*;
 
 WS: [ \t\r\n]+ -> skip ;
