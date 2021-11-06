@@ -21,7 +21,6 @@ struct_dec: {int a;}STRUCT a=NAMING_CONVENTION (BEGIN (struct_body)* END | struc
 //            (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
 //);
 
-struct_body: declaration
 
 
 main: MAIN BEGIN
@@ -38,25 +37,36 @@ declaration   : {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMI
 argument: {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
                               {System.out.println("ArgumentDec: "+$a.text);};
 
-statement      :
-               ifstmt
-             | display
-             | assignsment
-               ;
+
+while_statement : {int a;} a=WHILE {System.out.println("Loop: "+$a.text);}
+                LPAREN (expression | condition) RPAREN BEGIN
+                NEW_LINE declaration* statement* NEW_LINE
+                END NEW_LINE;
 
 
-ifstmt      :
-            IF LPAREN identifier EQUAL integer RPAREN
-            statement*
-            ENDIF
+
+
+scope_body      :
+            ((declaration SEMICOLON) |  (statement SEMICOLON) | scope_body_one_line)*
+                ;
+
+scope_body_one_line :
+            ((declaration NEW_LINE) | (statement NEW_LINE))
+                ;
+
+
+
+return_statement    :
+            RETURN expression
             ;
-
 
 display      :
                DISPLAY LPAREN expression RPAREN SEMICOLON;
 
+statement      :
+               if_stament | while_statement | assignment | display | return_statement;
 
-assignsment : NAMING_CONVENTION ASSIGN expression
+assignment : NAMING_CONVENTION ASSIGN expression
                 ;
 
 
@@ -92,7 +102,25 @@ BUILT_IN_DATA_TYPE:(INT | STRING  | LIST | BOOL | FPTR);
 STRUCT_DATA_TYPE: STRUCT;
 
 
+//CONDITIONAL OPERATIONS
+if_stament      :{int a;}
+            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line NEW_LINE)
+            |
+            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line NEW_LINE else_stament)
+            |
+            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE)
+            |
+            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE else_stament)
+            ;
 
+else_stament    :{int a;}
+            (a=ELSE {System.out.println("Conditonal: "+$a.txt);} NEW_LINE scope_body_one_line  NEW_LINE)
+            |
+            (a=ELSE {System.out.println("Conditonal: "+$a.txt);} BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE);
+
+condition : {int a;}(identifier | integer)
+                a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
+                {System.out.println("Operator: "+$a.text);} (identifier | integer);
 
 
 APPEND: 'append';
@@ -122,7 +150,7 @@ SUBTRACT: '-';
 DIVIDE: '/';
 EQUAL: '==';
 ASSIGN: '=';
-NOTEQUAL: '!=';
+NOT_EQUAL: '!=';
 BEGIN: 'begin';
 END: 'end';
 SEMICOLON: ';';
@@ -134,6 +162,7 @@ GREATER: '>';
 SMALLER: '<';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
+NEW_LINE: '\n';
 
 KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 KEYWORDS_EXCLUDE : (EXCLUDE APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
@@ -144,4 +173,4 @@ ALPHABET: ([a-z]|[A-Z])+;
 
 NAMING_CONVENTION: '^'(KEYWORDS_EXCLUDE)(ALPHABET | UNDERLINE)+ (ALPHABET | UNDERLINE | INTEGER)*;
 
-WS: [ \t\r\n]+ -> skip ;
+WS: [ \t\r\n ]+ -> skip ;
