@@ -29,7 +29,6 @@ main: MAIN BEGIN
                     END
                     ;
 
-getter_setter: BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAMING_CONVENTION END;
 
 declaration   : {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
                     {System.out.println("VarDec: "+$a.text);};
@@ -38,21 +37,7 @@ argument: {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CON
                               {System.out.println("ArgumentDec: "+$a.text);};
 
 
-while_statement : {int a;} a=WHILE {System.out.println("Loop: "+$a.text);}
-                LPAREN (expression | condition) RPAREN BEGIN
-                NEW_LINE declaration* statement* NEW_LINE
-                END NEW_LINE;
 
-
-
-
-scope_body      :
-            ((declaration SEMICOLON) |  (statement SEMICOLON) | scope_body_one_line)*
-                ;
-
-scope_body_one_line :
-            ((declaration NEW_LINE) | (statement NEW_LINE))
-                ;
 
 
 
@@ -101,6 +86,42 @@ comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 BUILT_IN_DATA_TYPE:(INT | STRING  | LIST | BOOL | FPTR);
 STRUCT_DATA_TYPE: STRUCT;
 
+//STRUCT SCOPE
+struct_scope    :
+                (declaration | )*
+             ;
+
+struct_var_dec   :
+                declaration LPAREN (argument COMMA)* (argument) RPAREN BEGIN NEW_LINE getter_setter NEW_LINE END NEW_LINE;
+
+getter_setter   :
+                SET NEW_LINE scope_body_one_line NEW_LINE GET NEW_LINE return_statement NEW_LINE
+                |
+                SET BEGIN NEW_LINE scope_body NEW_LINE END GET NEW_LINE return_statement NEW_LINE
+                |
+                SET NEW_LINE scope_body_one_line NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END NEW_LINE
+                |
+                SET BEGIN NEW_LINE scope_body NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END NEW_LINE
+                ;
+
+
+//BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAMING_CONVENTION END;
+
+
+//SCOPE DEFINITION
+scope_body_with_return :
+                (declaration | if_stament | while_statement | assignment | display)*
+                return_statement
+                ;
+
+
+scope_body      :
+            ((declaration SEMICOLON) |  (statement SEMICOLON) | scope_body_one_line)*
+                ;
+
+scope_body_one_line :
+            ((declaration NEW_LINE) | (statement NEW_LINE))
+                ;
 
 //CONDITIONAL OPERATIONS
 if_stament      :{int a;}
@@ -121,6 +142,18 @@ else_stament    :{int a;}
 condition : {int a;}(identifier | integer)
                 a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
                 {System.out.println("Operator: "+$a.text);} (identifier | integer);
+
+//LOOP OPERATIONS
+while_statement : {int a;}
+                (a=WHILE {System.out.println("Loop: "+$a.text);}
+                LPAREN (expression| condition) RPAREN NEW_LINE
+                 scope_body_one_line
+                 NEW_LINE)
+                 |
+                (a=WHILE {System.out.println("Loop: "+$a.text);}
+                LPAREN (expression | condition) RPAREN BEGIN
+                NEW_LINE declaration* statement* NEW_LINE
+                END NEW_LINE);
 
 
 APPEND: 'append';
@@ -160,6 +193,7 @@ UNDERLINE: '_';
 EXCLUDE: '?!';
 GREATER: '>';
 SMALLER: '<';
+COMMA: ',';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
 NEW_LINE: '\n';
