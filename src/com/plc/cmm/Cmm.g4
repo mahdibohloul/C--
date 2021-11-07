@@ -1,88 +1,166 @@
 grammar Cmm;
-//TODO: Other variables type
-//TODO: semicolon problem
-//TODO other op '*''/''-'
-//TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
-
-cmm : (struct_dec)* (functionDefinition)* main;
 
 
-TYPE_SPECIFIER
-    :
-    (   VOID
-    |   BOOL
-    |   INT
-    )
+
+// This class defines a complete generic visitor for a parse tree produced by CmmParser.
+cmm : (struct)* (function_definition)* main;
+
+
+
+//FUNCTION DEFINITIONS
+function_parameter_list
+    :   LPAREN ((argument ',')*(argument))? RPAREN
+    ;
+
+//TODO check void in function return type
+function_definition
+    :   {int a;}
+        TYPE_SPECIFIER
+        a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
+        function_parameter_list
+        (scope_body_one_line | return_statement)
+        |
+        (scope_body)* return_statement
     ;
 
 
-functionParameterList
-    :   TYPE_SPECIFIER NAMING_CONVENTION (COMMA TYPE_SPECIFIER NAMING_CONVENTION)*
-    ;
-
-functionDefinition
-    :   TYPE_SPECIFIER NAMING_CONVENTION parameterTypeList declaration* statement*
-    ;
-
-parameterTypeList
-    :   LeftParen functionParameterList? RightParen
-    ;
-
-func_call: NAMING_CONVENTION LPAREN (argument ',')*(argument) RPAREN SEMICOLON;
+function_invoke: NAMING_CONVENTION LPAREN function_parameter_list RPAREN;
 
 
-functionReturn
-    :   Identifier LeftParen identifierList? RightParen
-    ;
-
-
-identifierList
-    :   expression (COMMA expression)*
-    ;
-
-
-struct_dec: {int a;}STRUCT a=NAMING_CONVENTION (BEGIN (struct_body)* END | struct_body)
-{System.out.println("StructDec: "+$a.text);};
-
-
-//struct_body: ({int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION{System.out.println("VarDec: "+$a.text);} | (
-//            (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
-//);
-
-
-
-main: MAIN BEGIN
-                    declaration*
-                    statement*
-                    END
-                    ;
-
-
-declaration   : {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
-                    {System.out.println("VarDec: "+$a.text);};
-
-argument: {int a;}(BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
-                              {System.out.println("ArgumentDec: "+$a.text);};
-
-
-
-
-
-
-return_statement    :
-            RETURN expression
+//MAIN DEFINITION
+main        :
+            {int a;}
+            {System.out.println("Main");}
+            MAIN LPAREN RPAREN
+            scope_body_one_line
+            |
+            scope_body*
             ;
 
-display      :
-               DISPLAY LPAREN expression RPAREN SEMICOLON;
-
-statement      :
-               if_stament | while_statement | assignment | display | return_statement;
-
-assignment : NAMING_CONVENTION ASSIGN expression
+//BASE DEFINITIONS
+//TODO add function invocting log
+statement       :
+                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke
                 ;
 
+assignment      :
+                NAMING_CONVENTION ASSIGN expression
+                ;
 
+return_statement    :
+                    NEW_LINE
+                    RETURN
+                    {System.out.println("Return");}
+                    expression
+                    ;
+declaration     :
+                {int a;}
+                (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
+                {System.out.println("VarDec: "+$a.text);}
+                ;
+
+argument        :
+                {int a;}
+                TYPE_SPECIFIER a=NAMING_CONVENTION
+                {System.out.println("ArgumentDec: "+$a.text);}
+                ;
+
+//BUILT IN DEFINTIONS
+display         :
+                DISPLAY
+                {System.out.println("Built-in: display");}
+                LPAREN expression RPAREN;
+
+//STRUCT DEFINITION
+struct          : {int a;}
+                STRUCT a=NAMING_CONVENTION BEGIN NEW_LINE
+                struct_scope NEW_LINE
+                END;
+
+//STRUCT SCOPE DEFINITION
+struct_scope    :
+                (declaration | struct_var_dec)*
+             ;
+
+struct_var_dec   :
+                declaration LPAREN (argument COMMA)* (argument) RPAREN BEGIN NEW_LINE getter_setter NEW_LINE END NEW_LINE;
+
+getter_setter   :
+                SET scope_body_one_line GET return_statement
+                |
+                SET scope_body GET return_statement
+                |
+                SET scope_body_one_line GET scope_body_with_return
+                |
+                SET scope_body GET scope_body_with_return
+                ;
+
+//SCOPE DEFINITION
+scope_body_with_return :
+                (scope_body)* return_statement
+                ;
+
+scope_body      :
+                BEGIN NEW_LINE
+                (statement SEMICOLON
+                |
+                scope_body_one_line)+
+                NEW_LINE
+                END
+                NEW_LINE
+                ;
+
+scope_body_one_line     :
+                        NEW_LINE
+                        statement
+                        NEW_LINE
+                        ;
+
+//CONDITIONAL OPERATIONS
+if_stament      :
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line)
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line else_stament)
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body )
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body else_stament)
+            ;
+
+else_stament    :
+            (ELSE {System.out.println("Conditonal: else");} scope_body_one_line )
+            |
+            (ELSE {System.out.println("Conditonal: else");} scope_body);
+
+condition : {int a;}(identifier | integer)
+                a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
+                {System.out.println("Operator: "+$a.text);} (identifier | integer);
+
+//LOOP OPERATIONS
+while_statement :
+                (WHILE {System.out.println("Loop: while");}
+                LPAREN (expression| condition) RPAREN
+                scope_body_one_line)
+                 |
+                (WHILE {System.out.println("Loop: while");}
+                LPAREN (expression | condition) RPAREN
+                scope_body);
+
+do_while_statement :
+                (DO {System.out.println("Loop: do...while");}
+                scope_body_one_line
+                WHILE
+                LPAREN (expression | condition) RPAREN
+                SEMICOLON)
+                |
+                (DO {System.out.println("Loop: do...while");}
+                scope_body
+                WHILE
+                LPAREN (expression | condition) RPAREN
+                SEMICOLON);
+
+//EXPRESSION
+//TODO add function invocing as an excpression
 expression      :
                   term
                   |
@@ -108,82 +186,29 @@ identifier   : NAMING_CONVENTION  ;
 
 integer      : INTEGER  ;
 
+//TODO use comments in scope definitions
 comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
-/// DATA TYPE
-BUILT_IN_DATA_TYPE:(INT | STRING  | LIST | BOOL | FPTR);
-STRUCT_DATA_TYPE: STRUCT;
-
-//STRUCT SCOPE
-struct_scope    :
-                (declaration | )*
-             ;
-
-struct_var_dec   :
-                declaration LPAREN (argument COMMA)* (argument) RPAREN BEGIN NEW_LINE getter_setter NEW_LINE END NEW_LINE;
-
-getter_setter   :
-                SET NEW_LINE scope_body_one_line NEW_LINE GET NEW_LINE return_statement NEW_LINE
-                |
-                SET BEGIN NEW_LINE scope_body NEW_LINE END GET NEW_LINE return_statement NEW_LINE
-                |
-                SET NEW_LINE scope_body_one_line NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END NEW_LINE
-                |
-                SET BEGIN NEW_LINE scope_body NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END NEW_LINE
-                ;
 
 
-//BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAMING_CONVENTION END;
+///Data types Definition
+BUILT_IN_DATA_TYPE      :
+                    (INT
+                    |
+                    STRING
+                    |
+                    LIST
+                    |
+                    BOOL
+                    |
+                    FPTR);
 
+TYPE_SPECIFIER
+    :
+    (BUILT_IN_DATA_TYPE | STRUCT NAMING_CONVENTION)
+    ;
 
-//SCOPE DEFINITION
-scope_body_with_return :
-                (declaration | if_stament | while_statement | assignment | display)*
-                return_statement
-                ;
-
-
-scope_body      :
-            ((declaration SEMICOLON) |  (statement SEMICOLON) | scope_body_one_line)*
-                ;
-
-scope_body_one_line :
-            ((declaration NEW_LINE) | (statement NEW_LINE))
-                ;
-
-//CONDITIONAL OPERATIONS
-if_stament      :{int a;}
-            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line NEW_LINE)
-            |
-            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line NEW_LINE else_stament)
-            |
-            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE)
-            |
-            (a=IF {System.out.println("Conditional: "+$a.text);} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE else_stament)
-            ;
-
-else_stament    :{int a;}
-            (a=ELSE {System.out.println("Conditonal: "+$a.txt);} NEW_LINE scope_body_one_line  NEW_LINE)
-            |
-            (a=ELSE {System.out.println("Conditonal: "+$a.txt);} BEGIN NEW_LINE scope_body  NEW_LINE END NEW_LINE);
-
-condition : {int a;}(identifier | integer)
-                a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
-                {System.out.println("Operator: "+$a.text);} (identifier | integer);
-
-//LOOP OPERATIONS
-while_statement : {int a;}
-                (a=WHILE {System.out.println("Loop: "+$a.text);}
-                LPAREN (expression| condition) RPAREN NEW_LINE
-                 scope_body_one_line
-                 NEW_LINE)
-                 |
-                (a=WHILE {System.out.println("Loop: "+$a.text);}
-                LPAREN (expression | condition) RPAREN BEGIN
-                NEW_LINE declaration* statement* NEW_LINE
-                END NEW_LINE);
-
-
+//Constants Definition
 APPEND: 'append';
 SIZE: 'size';
 TRUE: 'true';
