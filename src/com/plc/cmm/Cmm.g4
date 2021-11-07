@@ -1,26 +1,37 @@
 grammar Cmm;
 
+//append_dec: {{System.out.println("Append");}} APPEND LPAREN NAMING_CONVENTION RPAREN  //MOHADESE
+//size_dec: {{System.out.println("Size");}} SIZE LPAREN NAMING_CONVENTION RPAREN    //MOHADESE
 
 
 // This class defines a complete generic visitor for a parse tree produced by CmmParser.
 cmm : (struct)* (function_definition)* main;
+//cmm : (comment)* (struct)* (comment)* (function_definition)* (comment)* main;  //MOHADESE
 
 
 
 //FUNCTION DEFINITIONS
 function_parameter_list
-    :   LPAREN ((argument ',')*(argument))? RPAREN
+    :   LPAREN ((argument ',')*(argument))* RPAREN
     ;
 
 //TODO check void in function return type
 function_definition
-    :   {int a;}
+    :   ({int a;}
         TYPE_SPECIFIER
         a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
         function_parameter_list
         (scope_body_one_line | return_statement)
         |
-        (scope_body)* return_statement
+        (scope_body)* return_statement)
+//        | (
+//        {int a;}
+//        VOID a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
+//                     function_parameter_list
+//                     (scope_body_one_line )
+//                     |
+//                     (scope_body)+
+//        )   //MOHADESE
     ;
 
 
@@ -41,6 +52,7 @@ main        :
 //TODO add function invocting log
 statement       :
                 if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke
+//                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke | size_dec | append_dec //MOHADESE
                 ;
 
 assignment      :
@@ -83,7 +95,7 @@ struct_scope    :
              ;
 
 struct_var_dec   :
-                declaration LPAREN (argument COMMA)* (argument) RPAREN BEGIN NEW_LINE getter_setter NEW_LINE END NEW_LINE;
+                declaration LPAREN ((argument COMMA)* (argument))* RPAREN BEGIN NEW_LINE getter_setter NEW_LINE END NEW_LINE; //non-argumented function with *  //MOHADESE
 
 getter_setter   :
                 SET scope_body_one_line GET return_statement
@@ -105,6 +117,9 @@ scope_body      :
                 (statement SEMICOLON
                 |
                 scope_body_one_line)+
+//                ((statement SEMICOLON
+//                |
+//                scope_body_one_line)+) | comment      //MOHADESE
                 NEW_LINE
                 END
                 NEW_LINE
