@@ -4,13 +4,41 @@ grammar Cmm;
 //TODO other op '*''/''-'
 //TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
 
-cmm : (struct_dec)* (func_dec)* main;
+cmm : (struct_dec)* (functionDefinition)* main;
 
 
-func_dec: {int a;}BUILT_IN_DATA_TYPE a=NAMING_CONVENTION LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAMING_CONVENTION END | RETURN NAMING_CONVENTION)
-            {System.out.println("FunctionDec: "+$a.text);}|
-            {int a;}VOID a=NAMING_CONVENTION LPAREN (argument ',')* (argument) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
-            {System.out.println("FunctionDec: "+$a.text);};
+TYPE_SPECIFIER
+    :
+    (   VOID
+    |   BOOL
+    |   INT
+    )
+    ;
+
+
+functionParameterList
+    :   TYPE_SPECIFIER NAMING_CONVENTION (COMMA TYPE_SPECIFIER NAMING_CONVENTION)*
+    ;
+
+functionDefinition
+    :   TYPE_SPECIFIER NAMING_CONVENTION parameterTypeList declaration* statement*
+    ;
+
+parameterTypeList
+    :   LeftParen functionParameterList? RightParen
+    ;
+
+func_call: NAMING_CONVENTION LPAREN (argument ',')*(argument) RPAREN SEMICOLON;
+
+
+functionReturn
+    :   Identifier LeftParen identifierList? RightParen
+    ;
+
+
+identifierList
+    :   expression (COMMA expression)*
+    ;
 
 
 struct_dec: {int a;}STRUCT a=NAMING_CONVENTION (BEGIN (struct_body)* END | struct_body)
@@ -207,4 +235,4 @@ ALPHABET: ([a-z]|[A-Z])+;
 
 NAMING_CONVENTION: '^'(KEYWORDS_EXCLUDE)(ALPHABET | UNDERLINE)+ (ALPHABET | UNDERLINE | INTEGER)*;
 
-WS: [ \t\r\n ]+ -> skip ;
+WS: [\t\r\n]+ -> skip ;
