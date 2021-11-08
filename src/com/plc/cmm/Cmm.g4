@@ -15,7 +15,7 @@ struct          :
                 {int a;}
                 STRUCT a=NAMING_CONVENTION {System.out.println("StructDec: "+$a.text);}
                 BEGIN NEW_LINE (struct_scope NEW_LINE)+
-                END
+                END NEW_LINE
                 )
                 ;
 
@@ -35,13 +35,13 @@ struct_var_dec   :
                 END
                 ;
 getter_setter   :
-                (SET BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
+                (SET BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 |
-                (SET BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE GET return_statement)
+                (SET BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET NEW_LINE return_statement)
                 |
-                (SET scope_body_one_line GET return_statement)
+                (SET (scope_body_one_line | return_statement)  GET NEW_LINE return_statement)
                 |
-                (SET scope_body_one_line GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
+                (SET (scope_body_one_line | return_statement)  GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 ;
 
 //FUNCTION DEFINITIONS
@@ -52,7 +52,7 @@ function_definition
         type_specifier
         a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
         argument_list
-        ((scope_body_one_line | return_statement) | (BEGIN NEW_LINE (scope_body)* return_statement NEW_LINE END NEW_LINE))
+        ((scope_body_one_line | return_statement) | (BEGIN NEW_LINE (scope_body | NEW_LINE | return_statement)* NEW_LINE END NEW_LINE))
         )
         |
         (
@@ -74,19 +74,18 @@ argument_list       :
                     ;
 
 function_invoke     :
-                    NAMING_CONVENTION
-                    argument_list
+                    NAMING_CONVENTION LPAREN
+                    ((expression | keywords)(COMMA (keywords | expression))*)
+                    RPAREN
                     ;
-
 
 //MAIN DEFINITION
 main        :
             {int a;}
             {System.out.println("Main");}
-            MAIN LPAREN RPAREN
-            scope_body_one_line
+            (MAIN LPAREN RPAREN NEW_LINE scope_body_one_line)
             |
-            scope_body*
+            (MAIN LPAREN RPAREN BEGIN NEW_LINE (scope_body | NEW_LINE)* NEW_LINE END NEW_LINE*)
             ;
 
 //BASE DEFINITIONS
@@ -113,37 +112,41 @@ statement       :
                 ;
 
 assignment      :
-                expression ASSIGN expression
+                (expression | declaration) ASSIGN expression
                 ;
 
 expression      :
+                  expression PRODUCT expression
+                  |
+                  expression DIVIDE expression
+                  |
+                  expression SUM expression
+                  |
+                  expression SUBTRACT expression
+                  |
+                  SUBTRACT expression
+                  |
                   term
                   |
-                  term PRODUCT term
-                  |
-                  term DIVIDE term
-                  |
-                  term SUM term
-                  |
-                  term SUBTRACT term
+                  LPAREN expression RPAREN
                 ;
 
 
 term          :
-                  identifier
+                  function_invoke
+                  |
+                  NAMING_CONVENTION
                   |
                   integer
                   |
-                  function_invoke
-                  |
-                  (NAMING_CONVENTION DOT NAMING_CONVENTION)
+                  struct_accessor
               ;
 
-return_statement    : RETURN {System.out.println("Return");} (expression | expression SEMICOLON);
+struct_accessor     :   NAMING_CONVENTION DOT NAMING_CONVENTION;
+return_statement    : RETURN {System.out.println("Return");} (expression SEMICOLON?)?;
 declaration     :
-                {int a;}
-                (built_in_data_type | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
-                {System.out.println("VarDec: "+$a.text);}
+
+                ((built_in_data_type | (STRUCT NAMING_CONVENTION)) identifier)(COMMA identifier)*
                 ;
 
 argument        :
@@ -156,11 +159,11 @@ argument        :
 display         :
                 DISPLAY
                 {System.out.println("Built-in: display");}
-                LPAREN expression RPAREN;
+                LPAREN statement RPAREN;
 
 append_dec      :
                 {System.out.println("Append");}
-                APPEND LPAREN identifier COMMA expression RPAREN
+                APPEND LPAREN (NAMING_CONVENTION | list_accessor | struct_accessor | function_invoke) COMMA expression RPAREN
                 ;
 
 size_dec        :
@@ -179,7 +182,7 @@ scope_body_with_return :
                 (scope_body)* return_statement
                 ;
 
-scope_body      : comment? (statement SEMICOLON | scope_body_one_line | NEW_LINE)+ comment?;
+scope_body      : comment? (statement SEMICOLON?)+ comment?;
 
 scope_body_one_line     : comment? statement comment? ;
 
@@ -191,11 +194,11 @@ if_stament      :
             |
             (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END NEW_LINE else_stament NEW_LINE)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END else_stament)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  (scope_body_one_line | return_statement) NEW_LINE)
+            (IF {System.out.println("Conditional: if");}  (expression| condition) NEW_LINE  (scope_body_one_line | return_statement) NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition) (scope_body_one_line | return_statement) NEW_LINE else_stament NEW_LINE)
+            (IF {System.out.println("Conditional: if");}  (expression| condition) NEW_LINE (scope_body_one_line | return_statement) NEW_LINE else_stament)
             |
             (IF {System.out.println("Conditional: if");}  (expression| condition)  BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
@@ -203,7 +206,7 @@ if_stament      :
             ;
 
 else_stament    :
-            (ELSE {System.out.println("Conditonal: else");} (scope_body_one_line | return_statement ))
+            (ELSE {System.out.println("Conditonal: else");} NEW_LINE (scope_body_one_line | return_statement ))
             |
             (ELSE {System.out.println("Conditonal: else");} BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             ;
@@ -212,9 +215,9 @@ condition : {int a;}(identifier | integer) a=(EQUAL | GREATER_AND_EQUAL | SMALLE
 
 //LOOP OPERATIONS
 while_statement :
-//                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line)
-//                |
-                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE)
+                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line)
+                |
+                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | NEW_LINE)+ NEW_LINE END NEW_LINE)
                 ;
 
 do_while_statement :
@@ -233,7 +236,10 @@ do_while_statement :
 
 
 
-identifier   : NAMING_CONVENTION  ;
+identifier   :  {int a;}
+                a=NAMING_CONVENTION
+                {System.out.println("VarDec: "+$a.text);}
+                ;
 
 
 integer      : INTEGER  ;
@@ -310,16 +316,15 @@ SMALLER: '<';
 COMMA: ',';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
+//WS: (' ' | '\t' | '\n') -> skip;
 NEW_LINE: '\n';
-WS: (' ' | '\t') -> skip;
 SHARPSIGN: '#';
 DOT: '.';
 TAB: '\t';
 LBRACKET: '[';
 RBRACKET: ']';
 
-KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
-KEYWORDS_EXCLUDE : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
+keywords : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 
 INTEGER: [0-9][0-9]*;
 
@@ -329,3 +334,6 @@ type_specifier
     :
     (built_in_data_type | STRUCT NAMING_CONVENTION | list_accessor)
     ;
+
+Whitespace: ([ \t]+ | Linebreak) -> skip;
+Linebreak: [\r\n];
