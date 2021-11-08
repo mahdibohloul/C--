@@ -47,13 +47,13 @@ getter_setter   :
 //FUNCTION DEFINITIONS
 //TODO check void in function return type
 function_definition
-    :   ({int a;}
+    :   (
+        {int a;}
         type_specifier
         a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
         argument_list
-        (scope_body_one_line | return_statement)
-        |
-        (scope_body)* return_statement)
+        ((scope_body_one_line | return_statement) | (BEGIN NEW_LINE (scope_body)* return_statement NEW_LINE END NEW_LINE))
+        )
         |
         (
         {int a;}
@@ -139,12 +139,7 @@ term          :
                   (NAMING_CONVENTION DOT NAMING_CONVENTION)
               ;
 
-return_statement    :
-                    NEW_LINE
-                    RETURN
-                    {System.out.println("Return");}
-                    expression
-                    ;
+return_statement    : RETURN {System.out.println("Return");} (expression | expression SEMICOLON);
 declaration     :
                 {int a;}
                 (built_in_data_type | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
@@ -165,7 +160,7 @@ display         :
 
 append_dec      :
                 {System.out.println("Append");}
-                APPEND LPAREN NAMING_CONVENTION RPAREN
+                APPEND LPAREN identifier COMMA expression RPAREN
                 ;
 
 size_dec        :
@@ -194,29 +189,41 @@ if_stament      :
             |
             (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line else_stament)
             |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN return_statement else_stament)
+            |
             (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body )
             |
             (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body else_stament)
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN return_statement else_stament)
+            |
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body_one_line)
+            |
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  return_statement)
+            |
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body_one_line else_stament)
+            |
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body )
+            |
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body else_stament)
             ;
 
 else_stament    :
             (ELSE {System.out.println("Conditonal: else");} scope_body_one_line )
             |
-            (ELSE {System.out.println("Conditonal: else");} scope_body);
+            (ELSE {System.out.println("Conditonal: else");} scope_body)
+            |
+            (ELSE {System.out.println("Conditonal: else");} return_statement)
+            ;
 
-condition : {int a;}(identifier | integer)
-                a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
-                {System.out.println("Operator: "+$a.text);} (identifier | integer);
+condition : {int a;}(identifier | integer) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL){System.out.println("Operator: "+$a.text);} (identifier | integer);
 
 //LOOP OPERATIONS
 while_statement :
-                (WHILE {System.out.println("Loop: while");}
-                LPAREN (expression| condition) RPAREN
-                scope_body_one_line)
-                 |
-                (WHILE {System.out.println("Loop: while");}
-                LPAREN (expression | condition) RPAREN
-                scope_body);
+//                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line)
+//                |
+                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE)
+                ;
 
 do_while_statement :
                 (DO {System.out.println("Loop: do...while");}
@@ -245,7 +252,7 @@ integer      : INTEGER  ;
 
 ///Data types Definition
 fptr_type       :
-                (FPTR SMALLER arguments ARROW type_specifier)
+                FPTR SMALLER ((type_specifier COMMA)* type_specifier)* ARROW type_specifier GREATER
                 ;
 
 list_type       :
@@ -269,6 +276,7 @@ built_in_data_type      :
                     FPTR);
 
 //Constants Definition
+WHILE: 'while';
 STRUCT: 'struct';
 APPEND: 'append';
 SIZE: 'size';
@@ -282,7 +290,6 @@ INT: 'int';
 BOOL: 'bool';
 LIST: 'list';
 VOID: 'void';
-WHILE: 'while';
 DO: 'do';
 IF: 'if';
 ENDIF: 'endif';
@@ -296,6 +303,7 @@ NAMING_CONVENTION: [a-zA-Z_][A-Za-z0-9_]*;
 
 SUM: '+';
 PRODUCT: '*';
+ARROW: '->';
 SUBTRACT: '-';
 DIVIDE: '/';
 EQUAL: '==';
@@ -313,7 +321,6 @@ SMALLER_AND_EQUAL: ('<=' | '=<');
 NEW_LINE: '\n';
 WS: (' ' | '\t') -> skip;
 SHARPSIGN: '#';
-ARROW: '->';
 DOT: '.';
 TAB: '\t';
 LBRACKET: '[';
@@ -325,9 +332,6 @@ KEYWORDS_EXCLUDE : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAI
 INTEGER: [0-9][0-9]*;
 
 ALPHABET: ([a-z]|[A-Z])+;
-
-
-
 
 type_specifier
     :
