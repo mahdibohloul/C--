@@ -6,15 +6,43 @@ grammar Cmm;
 // This class defines a complete generic visitor for a parse tree produced by CmmParser.
 //cmm : (struct)* (function_definition)* main;
 cmm : (comment)* (struct)* (comment)* (function_definition)* (comment)* main;  //MOHADESE
-
 //COMENT DEFINITION
 comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
 //STRUCT DEFINITION
-struct          : {int a;}
-                STRUCT a=NAMING_CONVENTION BEGIN NEW_LINE
-                struct_scope NEW_LINE
-                END;
+struct          :
+                (
+                {int a;}
+                STRUCT a=NAMING_CONVENTION {System.out.println("StructDec: "+$a.text);}
+                BEGIN NEW_LINE (struct_scope NEW_LINE)+
+                END
+                )
+                ;
+
+//STRUCT SCOPE DEFINITION
+struct_scope    :
+                (declaration SEMICOLON)*
+                |
+                declaration
+                |
+                struct_var_dec
+                ;
+
+struct_var_dec   :
+                declaration argument_list BEGIN NEW_LINE
+                getter_setter
+                NEW_LINE
+                END
+                ;
+getter_setter   :
+                (SET BEGIN NEW_LINE scope_body END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return)
+                |
+                (SET BEGIN NEW_LINE scope_body END NEW_LINE GET return_statement)
+                |
+                (SET scope_body_one_line NEW_LINE GET return_statement)
+                |
+                (SET scope_body_one_line NEW_LINE GET BEGIN NEW_LINE scope_body_with_return)
+                ;
 
 //FUNCTION DEFINITIONS
 //TODO check void in function return type
@@ -81,7 +109,7 @@ statement       :
                 |
                 size_dec
                 |
-                append_dec //MOHADESE
+                append_dec
                 ;
 
 assignment      :
@@ -107,6 +135,8 @@ term          :
                   integer
                   |
                   function_invoke
+                  |
+                  (NAMING_CONVENTION DOT NAMING_CONVENTION)
               ;
 
 return_statement    :
@@ -145,52 +175,18 @@ size_dec        :
 
 
 
-//STRUCT SCOPE DEFINITION
-struct_scope    :
-                (declaration | struct_var_dec)*
-             ;
 
-struct_var_dec   :
-                declaration argument_list BEGIN NEW_LINE
-                getter_setter NEW_LINE
-                END NEW_LINE
-                ; //non-argumented function with *  //MOHADESE
 
-getter_setter   :
-                SET scope_body_one_line GET return_statement
-                |
-                SET scope_body GET return_statement
-                |
-                SET scope_body_one_line GET scope_body_with_return
-                |
-                SET scope_body GET scope_body_with_return
-                ;
+
 
 //SCOPE DEFINITION
 scope_body_with_return :
                 (scope_body)* return_statement
                 ;
 
-scope_body      :
-                BEGIN NEW_LINE
-                comment*
-                (statement SEMICOLON
-                |
-                scope_body_one_line)+
-                |
-                comment*
-                NEW_LINE
-                END
-                NEW_LINE
-                ;
+scope_body      : comment? (statement SEMICOLON | scope_body_one_line)+ comment? NEW_LINE ;
 
-scope_body_one_line     :
-                        NEW_LINE
-                        comment*
-                        statement
-                        comment*
-                        NEW_LINE
-                        ;
+scope_body_one_line     : comment? statement NEW_LINE comment? ;
 
 //CONDITIONAL OPERATIONS
 if_stament      :
@@ -247,15 +243,18 @@ integer      : INTEGER  ;
 
 
 
-
 ///Data types Definition
 fptr_type       :
                 (FPTR SMALLER arguments ARROW type_specifier)
                 ;
 
 list_type       :
-                (LIST SPACE SHARPSIGN SPACE type_specifier)
+                (LIST SHARPSIGN type_specifier)
                 ;
+list_accessor   :
+                (NAMING_CONVENTION LBRACKET INTEGER RBRACKET)
+                ;
+
 built_in_data_type      :
                     (INT
                     |
@@ -269,12 +268,8 @@ built_in_data_type      :
                     |
                     FPTR);
 
-type_specifier
-    :
-    (built_in_data_type | STRUCT NAMING_CONVENTION)
-    ;
-
 //Constants Definition
+STRUCT: 'struct';
 APPEND: 'append';
 SIZE: 'size';
 TRUE: 'true';
@@ -282,7 +277,6 @@ FALSE: 'false';
 FPTR: 'fptr';
 DISPLAY: 'display';
 STRING: 'string';
-STRUCT: 'struct';
 MAIN: 'main';
 INT: 'int';
 BOOL: 'bool';
@@ -295,7 +289,11 @@ ENDIF: 'endif';
 ELSE: 'else';
 RETURN: 'return';
 GET: 'get';
+BEGIN: 'begin';
+END: 'end';
 SET: 'set';
+NAMING_CONVENTION: [a-zA-Z_][A-Za-z0-9_]*;
+
 SUM: '+';
 PRODUCT: '*';
 SUBTRACT: '-';
@@ -303,30 +301,35 @@ DIVIDE: '/';
 EQUAL: '==';
 ASSIGN: '=';
 NOT_EQUAL: '!=';
-BEGIN: 'begin';
-END: 'end';
 SEMICOLON: ';';
 LPAREN: '(';
 RPAREN: ')';
 UNDERLINE: '_';
-EXCLUDE: '?!';
 GREATER: '>';
 SMALLER: '<';
 COMMA: ',';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
 NEW_LINE: '\n';
-SPACE: ' ';
+WS: (' ' | '\t') -> skip;
 SHARPSIGN: '#';
 ARROW: '->';
+DOT: '.';
+TAB: '\t';
+LBRACKET: '[';
+RBRACKET: ']';
 
 KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
-KEYWORDS_EXCLUDE : (EXCLUDE APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
+KEYWORDS_EXCLUDE : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 
 INTEGER: [0-9][0-9]*;
 
 ALPHABET: ([a-z]|[A-Z])+;
 
-NAMING_CONVENTION: '^'(KEYWORDS_EXCLUDE)(ALPHABET | UNDERLINE)+ (ALPHABET | UNDERLINE | INTEGER)*;
 
-WS: [\t\r\n]+ -> skip ;
+
+
+type_specifier
+    :
+    (built_in_data_type | STRUCT NAMING_CONVENTION | list_accessor)
+    ;

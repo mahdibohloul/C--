@@ -29,6 +29,24 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStruct(CmmParser.StructContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CmmParser#struct_scope}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStruct_scope(CmmParser.Struct_scopeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#struct_var_dec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStruct_var_dec(CmmParser.Struct_var_decContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#getter_setter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGetter_setter(CmmParser.Getter_setterContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CmmParser#function_definition}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -119,24 +137,6 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSize_dec(CmmParser.Size_decContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CmmParser#struct_scope}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStruct_scope(CmmParser.Struct_scopeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CmmParser#struct_var_dec}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitStruct_var_dec(CmmParser.Struct_var_decContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CmmParser#getter_setter}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitGetter_setter(CmmParser.Getter_setterContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link CmmParser#scope_body_with_return}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -208,6 +208,12 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitList_type(CmmParser.List_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#list_accessor}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitList_accessor(CmmParser.List_accessorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#built_in_data_type}.
 	 * @param ctx the parse tree
