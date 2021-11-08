@@ -1,117 +1,285 @@
 grammar Cmm;
-//TODO: Other variables type
-//TODO: semicolon problem
-//TODO other op '*''/''-'
-//TODO: IF ELSE SIZE APPEND FPTR LIST and struct.NAME LINE problem
-
-cmm   : (func_dec | declaration |struct_dec)* main;
 
 
-func_dec: {int a;}VAR_DATA_TYPES a=NAME LPAREN (argument ',')* (argument) RPAREN (BEGIN declaration* statement* struct_dec* RETURN NAME END | RETURN NAME)
-            {System.out.println("FunctionDec: "+$a.text);}|
-            {int a;}VOID a=NAME LPAREN (argument ',')* (argument) RPAREN ((declaration | statement | struct_dec) |  BEGIN declaration* statement* struct_dec* END)
-            {System.out.println("FunctionDec: "+$a.text);};
 
 
-VAR_DATA_TYPES:(INT | STRING  | LIST | BOOL);
+// This class defines a complete generic visitor for a parse tree produced by CmmParser.
+//cmm : (struct)* (function_definition)* main;
+cmm : (comment)* (struct)* (comment)* (function_definition)* (comment)* main;  //MOHADESE
 
 
-struct_dec: {int a;}STRUCT a=NAME (BEGIN (struct_body)* END | struct_body)
-{System.out.println("StructDec: "+$a.text);};
+
+//FUNCTION DEFINITIONS
+argument_list
+    :   LPAREN ((argument ',')*(argument))* RPAREN
+    ;
+
+//TODO check void in function return type
+function_definition
+    :   ({int a;}
+        TYPE_SPECIFIER
+        a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
+        argument_list
+        (scope_body_one_line | return_statement)
+        |
+        (scope_body)* return_statement)
+        |
+        (
+        {int a;}
+        VOID a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
+                     argument_list
+                     (scope_body_one_line )
+                     |
+                     (scope_body)+
+        )
+    ;
 
 
-struct_body: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME{System.out.println("VarDec: "+$a.text);} | (
-            (VAR_DATA_TYPES | (STRUCT NAME)) a=NAME {System.out.println("VarDec: "+$a.text);} LPAREN argument RPAREN getter_setter
-);
+function_invoke: NAMING_CONVENTION LPAREN argument_list RPAREN;
 
 
-main: MAIN BEGIN
-                    declaration*
-                    statement*
-                    END
-                    ;
-
-getter_setter: BEGIN SET{System.out.println("Setter");} BEGIN (declaration | statement)* END GET {System.out.println("Getter");} RETURN NAME END;
-
-declaration   : {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME SEMICOLON
-                    {System.out.println("VarDec: "+$a.text);};
-
-argument: {int a;}(VAR_DATA_TYPES | (STRUCT NAME)) a=NAME
-                              {System.out.println("ArgumentDec: "+$a.text);};
-
-statement      :
-               ifstmt
-             | display
-             | assignstmt
-               ;
-
-
-ifstmt      :
-            IF LPAREN identifier EQUAL integer RPAREN
-            statement*
-            ENDIF
+//MAIN DEFINITION
+main        :
+            {int a;}
+            {System.out.println("Main");}
+            MAIN LPAREN RPAREN
+            scope_body_one_line
+            |
+            scope_body*
             ;
 
-
-display      :
-               DISPLAY LPAREN term RPAREN SEMICOLON;
-
-
-assignstmt : NAME ASSIGN expression SEMICOLON
+//BASE DEFINITIONS
+//TODO add function invocting log
+statement       :
+                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke
+//                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke | size_dec | append_dec //MOHADESE
                 ;
 
+assignment      :
+                NAMING_CONVENTION ASSIGN expression
+                ;
 
+return_statement    :
+                    NEW_LINE
+                    RETURN
+                    {System.out.println("Return");}
+                    expression
+                    ;
+declaration     :
+                {int a;}
+                (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
+                {System.out.println("VarDec: "+$a.text);}
+                ;
+
+argument        :
+                {int a;}
+                TYPE_SPECIFIER a=NAMING_CONVENTION
+                {System.out.println("ArgumentDec: "+$a.text);}
+                ;
+
+//BUILT IN DEFINTIONS
+display         :
+                DISPLAY
+                {System.out.println("Built-in: display");}
+                LPAREN expression RPAREN;
+
+
+
+//STRUCT DEFINITION
+struct          : {int a;}
+                STRUCT a=NAMING_CONVENTION BEGIN NEW_LINE
+                struct_scope NEW_LINE
+                END;
+
+//STRUCT SCOPE DEFINITION
+struct_scope    :
+                (declaration | struct_var_dec)*
+             ;
+
+struct_var_dec   :
+                declaration argument_list BEGIN NEW_LINE
+                getter_setter NEW_LINE
+                END NEW_LINE
+                ; //non-argumented function with *  //MOHADESE
+
+getter_setter   :
+                SET scope_body_one_line GET return_statement
+                |
+                SET scope_body GET return_statement
+                |
+                SET scope_body_one_line GET scope_body_with_return
+                |
+                SET scope_body GET scope_body_with_return
+                ;
+
+//SCOPE DEFINITION
+scope_body_with_return :
+                (scope_body)* return_statement
+                ;
+
+scope_body      :
+                BEGIN NEW_LINE
+                comment*
+                (statement SEMICOLON
+                |
+                scope_body_one_line)+
+                |
+                comment*
+                NEW_LINE
+                END
+                NEW_LINE
+                ;
+
+scope_body_one_line     :
+                        NEW_LINE
+                        comment*
+                        statement
+                        comment*
+                        NEW_LINE
+                        ;
+
+//CONDITIONAL OPERATIONS
+if_stament      :
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line)
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line else_stament)
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body )
+            |
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body else_stament)
+            ;
+
+else_stament    :
+            (ELSE {System.out.println("Conditonal: else");} scope_body_one_line )
+            |
+            (ELSE {System.out.println("Conditonal: else");} scope_body);
+
+condition : {int a;}(identifier | integer)
+                a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL)
+                {System.out.println("Operator: "+$a.text);} (identifier | integer);
+
+//LOOP OPERATIONS
+while_statement :
+                (WHILE {System.out.println("Loop: while");}
+                LPAREN (expression| condition) RPAREN
+                scope_body_one_line)
+                 |
+                (WHILE {System.out.println("Loop: while");}
+                LPAREN (expression | condition) RPAREN
+                scope_body);
+
+do_while_statement :
+                (DO {System.out.println("Loop: do...while");}
+                scope_body_one_line
+                WHILE
+                LPAREN (expression | condition) RPAREN
+                SEMICOLON)
+                |
+                (DO {System.out.println("Loop: do...while");}
+                scope_body
+                WHILE
+                LPAREN (expression | condition) RPAREN
+                SEMICOLON);
+
+//EXPRESSION
+//TODO add function invocing as an excpression
 expression      :
-                term
-              |
-                term PLUS term
+                  term
+                  |
+                  term PRODUCT term
+                  |
+                  term DIVIDE term
+                  |
+                  term SUM term
+                  |
+                  term SUBTRACT term
                 ;
 
 
 term          :
-              identifier
-            | integer
+                  identifier
+                  |
+                  integer
               ;
 
 
-identifier   : NAME  ;
+identifier   : NAMING_CONVENTION  ;
 
 
 integer      : INTEGER  ;
 
+//TODO use comments in scope definitions
+comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
-IF: 'if';
-ENDIF: 'endif';
-MAIN: 'main()';
-DO: 'do';
-RETURN: 'return';
-GET: 'get';
-SET: 'set';
+
+
+///Data types Definition
+BUILT_IN_DATA_TYPE      :
+                    (INT
+                    |
+                    STRING
+                    |
+                    LIST
+                    |
+                    BOOL
+                    |
+                    FPTR);
+
+TYPE_SPECIFIER
+    :
+    (BUILT_IN_DATA_TYPE | STRUCT NAMING_CONVENTION)
+    ;
+
+//Constants Definition
 APPEND: 'append';
 SIZE: 'size';
 TRUE: 'true';
 FALSE: 'false';
 FPTR: 'fptr';
 DISPLAY: 'display';
-INT: 'int';
 STRING: 'string';
 STRUCT: 'struct';
+MAIN: 'main';
+INT: 'int';
 BOOL: 'bool';
 LIST: 'list';
 VOID: 'void';
 WHILE: 'while';
-PLUS: '+';
+DO: 'do';
+IF: 'if';
+ENDIF: 'endif';
+ELSE: 'else';
+RETURN: 'return';
+GET: 'get';
+SET: 'set';
+SUM: '+';
+PRODUCT: '*';
+SUBTRACT: '-';
+DIVIDE: '/';
 EQUAL: '==';
 ASSIGN: '=';
-NOTEQUAL: '!=';
+NOT_EQUAL: '!=';
 BEGIN: 'begin';
 END: 'end';
 SEMICOLON: ';';
 LPAREN: '(';
 RPAREN: ')';
+UNDERLINE: '_';
+EXCLUDE: '?!';
+GREATER: '>';
+SMALLER: '<';
+COMMA: ',';
+GREATER_AND_EQUAL: ('>=' | '=>');
+SMALLER_AND_EQUAL: ('<=' | '=<');
+NEW_LINE: '\n';
+
+KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
+KEYWORDS_EXCLUDE : (EXCLUDE APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 
 INTEGER: [0-9][0-9]*;
 
-NAME: [a-z]+;
+ALPHABET: ([a-z]|[A-Z])+;
 
-WS: [ \t\r\n]+ -> skip ;
+NAMING_CONVENTION: '^'(KEYWORDS_EXCLUDE)(ALPHABET | UNDERLINE)+ (ALPHABET | UNDERLINE | INTEGER)*;
+
+WS: [\t\r\n]+ -> skip ;
