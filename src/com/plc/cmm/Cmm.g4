@@ -7,17 +7,20 @@ grammar Cmm;
 //cmm : (struct)* (function_definition)* main;
 cmm : (comment)* (struct)* (comment)* (function_definition)* (comment)* main;  //MOHADESE
 
+//COMENT DEFINITION
+comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
+//STRUCT DEFINITION
+struct          : {int a;}
+                STRUCT a=NAMING_CONVENTION BEGIN NEW_LINE
+                struct_scope NEW_LINE
+                END;
 
 //FUNCTION DEFINITIONS
-argument_list
-    :   LPAREN ((argument ',')*(argument))* RPAREN
-    ;
-
 //TODO check void in function return type
 function_definition
     :   ({int a;}
-        TYPE_SPECIFIER
+        type_specifier
         a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
         argument_list
         (scope_body_one_line | return_statement)
@@ -34,8 +37,18 @@ function_definition
         )
     ;
 
+arguments           :
+                    ((argument ',')*(argument))*
+                    ;
 
-function_invoke: NAMING_CONVENTION LPAREN argument_list RPAREN;
+argument_list       :
+                    LPAREN arguments RPAREN
+                    ;
+
+function_invoke     :
+                    NAMING_CONVENTION
+                    argument_list
+                    ;
 
 
 //MAIN DEFINITION
@@ -49,15 +62,52 @@ main        :
             ;
 
 //BASE DEFINITIONS
-//TODO add function invocting log
 statement       :
-//                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke
-                if_stament | while_statement | do_while_statement | assignment | display | declaration | expression | function_invoke | size_dec | append_dec //MOHADESE
+                if_stament
+                |
+                while_statement
+                |
+                do_while_statement
+                |
+                assignment
+                |
+                display
+                |
+                declaration
+                |
+                expression
+                |
+                (function_invoke {System.out.println("FunctionCall");})
+                |
+                size_dec
+                |
+                append_dec //MOHADESE
                 ;
 
 assignment      :
-                NAMING_CONVENTION ASSIGN expression
+                expression ASSIGN expression
                 ;
+
+expression      :
+                  term
+                  |
+                  term PRODUCT term
+                  |
+                  term DIVIDE term
+                  |
+                  term SUM term
+                  |
+                  term SUBTRACT term
+                ;
+
+
+term          :
+                  identifier
+                  |
+                  integer
+                  |
+                  function_invoke
+              ;
 
 return_statement    :
                     NEW_LINE
@@ -67,13 +117,13 @@ return_statement    :
                     ;
 declaration     :
                 {int a;}
-                (BUILT_IN_DATA_TYPE | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
+                (built_in_data_type | (STRUCT NAMING_CONVENTION)) a=NAMING_CONVENTION
                 {System.out.println("VarDec: "+$a.text);}
                 ;
 
 argument        :
                 {int a;}
-                TYPE_SPECIFIER a=NAMING_CONVENTION
+                type_specifier a=NAMING_CONVENTION
                 {System.out.println("ArgumentDec: "+$a.text);}
                 ;
 
@@ -93,11 +143,7 @@ size_dec        :
                 SIZE LPAREN NAMING_CONVENTION RPAREN
                 ;
 
-//STRUCT DEFINITION
-struct          : {int a;}
-                STRUCT a=NAMING_CONVENTION BEGIN NEW_LINE
-                struct_scope NEW_LINE
-                END;
+
 
 //STRUCT SCOPE DEFINITION
 struct_scope    :
@@ -189,26 +235,7 @@ do_while_statement :
                 LPAREN (expression | condition) RPAREN
                 SEMICOLON);
 
-//EXPRESSION
-//TODO add function invocing as an excpression
-expression      :
-                  term
-                  |
-                  term PRODUCT term
-                  |
-                  term DIVIDE term
-                  |
-                  term SUM term
-                  |
-                  term SUBTRACT term
-                ;
 
-
-term          :
-                  identifier
-                  |
-                  integer
-              ;
 
 
 identifier   : NAMING_CONVENTION  ;
@@ -216,26 +243,35 @@ identifier   : NAMING_CONVENTION  ;
 
 integer      : INTEGER  ;
 
-//TODO use comments in scope definitions
-comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
+
+
 
 
 
 ///Data types Definition
-BUILT_IN_DATA_TYPE      :
+fptr_type       :
+                (FPTR SMALLER arguments ARROW type_specifier)
+                ;
+
+list_type       :
+                (LIST SPACE SHARPSIGN SPACE type_specifier)
+                ;
+built_in_data_type      :
                     (INT
                     |
                     STRING
                     |
-                    LIST
+                    list_type
+                    |
+                    fptr_type
                     |
                     BOOL
                     |
                     FPTR);
 
-TYPE_SPECIFIER
+type_specifier
     :
-    (BUILT_IN_DATA_TYPE | STRUCT NAMING_CONVENTION)
+    (built_in_data_type | STRUCT NAMING_CONVENTION)
     ;
 
 //Constants Definition
@@ -280,6 +316,9 @@ COMMA: ',';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
 NEW_LINE: '\n';
+SPACE: ' ';
+SHARPSIGN: '#';
+ARROW: '->';
 
 KEYWORDS : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 KEYWORDS_EXCLUDE : (EXCLUDE APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
