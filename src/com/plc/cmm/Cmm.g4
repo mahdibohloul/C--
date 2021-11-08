@@ -35,13 +35,13 @@ struct_var_dec   :
                 END
                 ;
 getter_setter   :
-                (SET BEGIN NEW_LINE scope_body END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return)
+                (SET BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 |
-                (SET BEGIN NEW_LINE scope_body END NEW_LINE GET return_statement)
+                (SET BEGIN NEW_LINE scope_body NEW_LINE END NEW_LINE GET return_statement)
                 |
-                (SET scope_body_one_line NEW_LINE GET return_statement)
+                (SET scope_body_one_line GET return_statement)
                 |
-                (SET scope_body_one_line NEW_LINE GET BEGIN NEW_LINE scope_body_with_return)
+                (SET scope_body_one_line GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 ;
 
 //FUNCTION DEFINITIONS
@@ -184,9 +184,9 @@ scope_body_with_return :
                 (scope_body)* return_statement
                 ;
 
-scope_body      : comment? (statement SEMICOLON | scope_body_one_line)+ comment? NEW_LINE ;
+scope_body      : comment? (statement SEMICOLON | scope_body_one_line | NEW_LINE)+ comment?;
 
-scope_body_one_line     : comment? statement NEW_LINE comment? ;
+scope_body_one_line     : comment? statement comment? ;
 
 //CONDITIONAL OPERATIONS
 if_stament      :
