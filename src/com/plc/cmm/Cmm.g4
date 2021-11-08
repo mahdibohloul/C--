@@ -185,35 +185,27 @@ scope_body_one_line     : comment? statement comment? ;
 
 //CONDITIONAL OPERATIONS
 if_stament      :
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN (scope_body_one_line | return_statement) NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body_one_line else_stament)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN (scope_body_one_line | return_statement) else_stament)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN return_statement else_stament)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body )
+            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END NEW_LINE else_stament NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN scope_body else_stament)
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  (scope_body_one_line | return_statement) NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN return_statement else_stament)
+            (IF {System.out.println("Conditional: if");}  (expression| condition) (scope_body_one_line | return_statement) NEW_LINE else_stament NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body_one_line)
+            (IF {System.out.println("Conditional: if");}  (expression| condition)  BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  return_statement)
-            |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body_one_line else_stament)
-            |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body )
-            |
-            (IF {System.out.println("Conditional: if");}  (expression| condition)  scope_body else_stament)
+            (IF {System.out.println("Conditional: if");}  (expression| condition) BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END else_stament)
             ;
 
 else_stament    :
-            (ELSE {System.out.println("Conditonal: else");} scope_body_one_line )
+            (ELSE {System.out.println("Conditonal: else");} (scope_body_one_line | return_statement ))
             |
-            (ELSE {System.out.println("Conditonal: else");} scope_body)
-            |
-            (ELSE {System.out.println("Conditonal: else");} return_statement)
+            (ELSE {System.out.println("Conditonal: else");} BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             ;
 
 condition : {int a;}(identifier | integer) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL){System.out.println("Operator: "+$a.text);} (identifier | integer);
