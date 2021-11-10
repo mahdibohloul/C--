@@ -5,7 +5,7 @@ grammar Cmm;
 
 // This class defines a complete generic visitor for a parse tree produced by CmmParser.
 //cmm : (struct)* (function_definition)* main;
-cmm : (struct)* (function_definition)* main;  //MOHADESE
+cmm : (struct)*(function_definition)* main;  //MOHADESE
 //COMENT DEFINITION
 
 //STRUCT DEFINITION
@@ -112,6 +112,16 @@ statement       :
 
 
 expression      :
+                  LPAREN expression RPAREN
+                  |
+                  struct_accessor
+                  |
+                  list_accessor
+                  |
+                  SUBTRACT {System.out.println("Operator : -");} expression
+                  |
+                  TILDA {System.out.println("Operator : ~");} LPAREN expression RPAREN
+                  |
                   expression {int a;} a=PRODUCT {System.out.println("Operator : " + $a.text);} expression
                   |
                   expression {int a;} a=DIVIDE {System.out.println("Operator : " + $a.text);} expression
@@ -120,22 +130,14 @@ expression      :
                   |
                   expression {int a;}a=SUBTRACT {System.out.println("Operator : " + $a.text);}expression
                   |
-                  SUBTRACT {System.out.println("Operator : -");} expression
+                  condition
+                  |
+                  term
                   |
                   expression {int a;}a=AND {System.out.println("Operator : " + $a.text);}expression
                   |
                   expression {int a;} a=OR {System.out.println("Operator : " + $a.text);}expression
-                  |
-                  term
-                  |
-                  list_accessor
-                  |
-                  LPAREN expression RPAREN
-                  |
-                  TILDA {System.out.println("Operator : ~");} LPAREN expression RPAREN
-                  |
-                  condition
-                ;
+                  ;
 
 
 term          :
@@ -144,8 +146,6 @@ term          :
                   identifier
                   |
                   integer
-                  |
-                  struct_accessor
                   |
                   size_dec
               ;
@@ -353,8 +353,9 @@ type_specifier
     :
     (built_in_data_type | STRUCT NAMING_CONVENTION | list_accessor)
     ;
- SPACE: ' ';
-CM: ('/*' ( SPACE |ALPHABET | INTEGER )* '*/')+ -> skip;
+
+SPACE : ' ';
+CM : ('/*' (SPACE | ALPHABET | INTEGER | SEMICOLON)* '*/') -> skip;
 
 Whitespace: ([ \t]+ | Linebreak) -> skip;
 Linebreak: [\r\n]+;
