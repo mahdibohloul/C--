@@ -113,19 +113,19 @@ statement       :
 
 
 expression      :
-                  expression {int a;} a=PRODUCT {System.out.println("Operator: " + $a.text);} expression
+                  expression {int a;} a=PRODUCT {System.out.println("Operator : " + $a.text);} expression
                   |
-                  expression {int a;} a=DIVIDE {System.out.println("Operator: " + $a.text);} expression
+                  expression {int a;} a=DIVIDE {System.out.println("Operator : " + $a.text);} expression
                   |
-                  expression {int a;}a=SUM {System.out.println("Operator: " + $a.text);}expression
+                  expression {int a;}a=SUM {System.out.println("Operator : " + $a.text);}expression
                   |
-                  expression {int a;}a=SUBTRACT {System.out.println("Operator: " + $a.text);}expression
+                  expression {int a;}a=SUBTRACT {System.out.println("Operator : " + $a.text);}expression
                   |
-                  SUBTRACT {System.out.println("Operator: -");} expression
+                  SUBTRACT {System.out.println("Operator : -");} expression
                   |
-                  expression {int a;}a=AND {System.out.println("Operator: " + $a.text);}expression
+                  expression {int a;}a=AND {System.out.println("Operator : " + $a.text);}expression
                   |
-                  expression {int a;} a=OR {System.out.println("Operator: " + $a.text);}expression
+                  expression {int a;} a=OR {System.out.println("Operator : " + $a.text);}expression
                   |
                   term
                   |
@@ -133,7 +133,7 @@ expression      :
                   |
                   LPAREN expression RPAREN
                   |
-                  TILDA {System.out.println("Operator: ~");} LPAREN expression RPAREN
+                  TILDA {System.out.println("Operator : ~");} LPAREN expression RPAREN
                   |
                   condition
                 ;
@@ -157,7 +157,7 @@ return_statement    : RETURN {System.out.println("Return");} ((expression | appe
 argument        :
                 {int a;}
                 type_specifier a=NAMING_CONVENTION
-                {System.out.println("ArgumentDec: "+$a.text);}
+                {System.out.println("ArgumentDec : "+$a.text);}
                 ;
 
 assignment      :
@@ -224,7 +224,7 @@ else_stament    :
             ;
 
 condition :
-            ({int a;}(integer | identifier) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL | AND | OR){System.out.println("Operator: "+$a.text);} (integer | identifier));
+            ({int a;}(integer | identifier) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL | AND | OR){System.out.println("Operator : "+$a.text);} (integer | identifier));
 
 
 
@@ -254,7 +254,7 @@ do_while_statement :
 
 identifier   :  {int a;}
                 a=NAMING_CONVENTION
-                {System.out.println("VarDec: "+$a.text);}
+                {System.out.println("VarDec : "+$a.text);}
                 ;
 
 
