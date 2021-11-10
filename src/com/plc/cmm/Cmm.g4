@@ -26,6 +26,8 @@ struct_scope    :
                 declaration
                 |
                 struct_var_dec
+                |
+                (assignment SEMICOLON?)
                 ;
 
 struct_var_dec   :
@@ -35,13 +37,13 @@ struct_var_dec   :
                 END
                 ;
 getter_setter   :
-                (SET BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
+                (SET {System.out.println("Setter");}BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET{System.out.println("Getter");} BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 |
-                (SET BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET NEW_LINE return_statement)
+                (SET {System.out.println("Setter");}BEGIN NEW_LINE (scope_body | return_statement | NEW_LINE)+ NEW_LINE END NEW_LINE GET{System.out.println("Getter");} NEW_LINE return_statement)
                 |
-                (SET (scope_body_one_line | return_statement)  GET NEW_LINE return_statement)
+                (SET {System.out.println("Setter");}(scope_body_one_line | return_statement)  GET {System.out.println("Getter");} NEW_LINE return_statement)
                 |
-                (SET (scope_body_one_line | return_statement)  GET BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
+                (SET {System.out.println("Setter");}(scope_body_one_line | return_statement)  GET{System.out.println("Getter");} BEGIN NEW_LINE scope_body_with_return NEW_LINE END)
                 ;
 
 //FUNCTION DEFINITIONS
@@ -52,14 +54,14 @@ function_definition
         type_specifier
         a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
         argument_list
-        ((scope_body_one_line | return_statement) | (BEGIN NEW_LINE (scope_body | NEW_LINE | return_statement)* NEW_LINE END NEW_LINE))
+        ((NEW_LINE scope_body_one_line |  return_statement) | (BEGIN NEW_LINE (scope_body | NEW_LINE | (return_statement SEMICOLON?))* NEW_LINE END NEW_LINE))
         )
         |
         (
         {int a;}
         VOID a=NAMING_CONVENTION {System.out.println("FunctionDec: "+$a.text);}
                      argument_list
-                     (scope_body_one_line )
+                     (NEW_LINE scope_body_one_line NEW_LINE*)
                      |
                      (scope_body)+
         )
@@ -73,10 +75,10 @@ argument_list       :
                     LPAREN arguments RPAREN
                     ;
 
-function_invoke     :
-                    NAMING_CONVENTION LPAREN
-                    ((expression | keywords)(COMMA (keywords | expression))*)
-                    RPAREN
+function_invoke     :{System.out.println("FunctionCall");}
+                    NAMING_CONVENTION (LPAREN
+                    ((expression | keywords)(COMMA (keywords | expression))*)?
+                    RPAREN)+
                     ;
 
 //MAIN DEFINITION
@@ -106,48 +108,51 @@ statement       :
                 |
                 (function_invoke {System.out.println("FunctionCall");})
                 |
-                size_dec
-                |
                 append_dec
                 ;
 
-assignment      :
-                (expression | declaration) ASSIGN expression
-                ;
 
 expression      :
-                  expression PRODUCT expression
+                  expression {int a;} a=PRODUCT {System.out.println("Operator: " + $a.text);} expression
                   |
-                  expression DIVIDE expression
+                  expression {int a;} a=DIVIDE {System.out.println("Operator: " + $a.text);} expression
                   |
-                  expression SUM expression
+                  expression {int a;}a=SUM {System.out.println("Operator: " + $a.text);}expression
                   |
-                  expression SUBTRACT expression
+                  expression {int a;}a=SUBTRACT {System.out.println("Operator: " + $a.text);}expression
                   |
-                  SUBTRACT expression
+                  SUBTRACT {System.out.println("Operator: -");} expression
+                  |
+                  expression {int a;}a=AND {System.out.println("Operator: " + $a.text);}expression
+                  |
+                  expression {int a;} a=OR {System.out.println("Operator: " + $a.text);}expression
                   |
                   term
                   |
+                  list_accessor
+                  |
                   LPAREN expression RPAREN
+                  |
+                  TILDA {System.out.println("Operator: ~");} LPAREN expression RPAREN
+                  |
+                  condition
                 ;
 
 
 term          :
                   function_invoke
                   |
-                  NAMING_CONVENTION
+                  identifier
                   |
                   integer
                   |
                   struct_accessor
+                  |
+                  size_dec
               ;
 
 struct_accessor     :   NAMING_CONVENTION DOT NAMING_CONVENTION;
-return_statement    : RETURN {System.out.println("Return");} (expression SEMICOLON?)?;
-declaration     :
-
-                ((built_in_data_type | (STRUCT NAMING_CONVENTION)) identifier)(COMMA identifier)*
-                ;
+return_statement    : RETURN {System.out.println("Return");} ((expression | append_dec) SEMICOLON?)?;
 
 argument        :
                 {int a;}
@@ -155,6 +160,13 @@ argument        :
                 {System.out.println("ArgumentDec: "+$a.text);}
                 ;
 
+assignment      :
+                (expression | declaration) ASSIGN expression SEMICOLON?
+                ;
+declaration     :
+
+                ((built_in_data_type | (STRUCT NAMING_CONVENTION) | fptr_accessor) identifier)(COMMA identifier)*
+                ;
 //BUILT IN DEFINTIONS
 display         :
                 DISPLAY
@@ -182,23 +194,23 @@ scope_body_with_return :
                 (scope_body)* return_statement
                 ;
 
-scope_body      : comment? (statement SEMICOLON?)+ comment?;
+scope_body      : comment? (statement SEMICOLON?) comment?;
 
-scope_body_one_line     : comment? statement comment? ;
+scope_body_one_line     : comment? (statement) comment? ;
 
 //CONDITIONAL OPERATIONS
 if_stament      :
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN (scope_body_one_line | return_statement) NEW_LINE)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression | condition) RPAREN (scope_body_one_line | return_statement) NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN (scope_body_one_line | return_statement) else_stament)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression | condition) RPAREN (scope_body_one_line | return_statement) else_stament)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression | condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
-            (IF {System.out.println("Conditional: if");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END else_stament)
+            (IF {System.out.println("Conditional: if");} LPAREN (expression | condition) RPAREN BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END else_stament)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition) NEW_LINE  (scope_body_one_line | return_statement) NEW_LINE)
+            (IF {System.out.println("Conditional: if");}  (expression | condition) NEW_LINE  (scope_body_one_line | return_statement SEMICOLON?) NEW_LINE)
             |
-            (IF {System.out.println("Conditional: if");}  (expression| condition) NEW_LINE (scope_body_one_line | return_statement) NEW_LINE else_stament)
+            (IF {System.out.println("Conditional: if");}  (expression| condition) NEW_LINE (scope_body_one_line | return_statement SEMICOLON?) NEW_LINE else_stament)
             |
             (IF {System.out.println("Conditional: if");}  (expression| condition)  BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
             |
@@ -206,26 +218,30 @@ if_stament      :
             ;
 
 else_stament    :
-            (ELSE {System.out.println("Conditonal: else");} NEW_LINE (scope_body_one_line | return_statement ))
+            (ELSE {System.out.println("Conditonal: else");} NEW_LINE (scope_body_one_line | return_statement SEMICOLON?))
             |
-            (ELSE {System.out.println("Conditonal: else");} BEGIN NEW_LINE (scope_body | scope_body return_statement) NEW_LINE END)
+            (ELSE {System.out.println("Conditonal: else");} BEGIN NEW_LINE (scope_body | scope_body return_statement SEMICOLON?) NEW_LINE END)
             ;
 
-condition : {int a;}(identifier | integer) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL){System.out.println("Operator: "+$a.text);} (identifier | integer);
+condition :
+            ({int a;}(integer | identifier) a=(EQUAL | GREATER_AND_EQUAL | SMALLER_AND_EQUAL | SMALLER | GREATER | NOT_EQUAL | AND | OR){System.out.println("Operator: "+$a.text);} (integer | identifier));
+
+
+
 
 //LOOP OPERATIONS
 while_statement :
-                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN NEW_LINE scope_body_one_line)
+                (WHILE {System.out.println("Loop: while");} LPAREN (expression)  RPAREN NEW_LINE scope_body_one_line)
                 |
-                (WHILE {System.out.println("Loop: while");} LPAREN (expression| condition) RPAREN BEGIN NEW_LINE (scope_body | NEW_LINE)+ NEW_LINE END NEW_LINE)
+                (WHILE {System.out.println("Loop: while");} LPAREN (expression)  RPAREN BEGIN NEW_LINE (scope_body | NEW_LINE)+ NEW_LINE END NEW_LINE)
                 ;
 
 do_while_statement :
-                (DO {System.out.println("Loop: do...while");}
-                scope_body_one_line
+                (DO NEW_LINE+ {System.out.println("Loop: do...while");}
+                scope_body_one_line SEMICOLON
+                NEW_LINE+
                 WHILE
-                LPAREN (expression | condition) RPAREN
-                SEMICOLON)
+                (expression | condition))
                 |
                 (DO {System.out.println("Loop: do...while");}
                 scope_body
@@ -247,17 +263,18 @@ integer      : INTEGER  ;
 
 
 
-
 ///Data types Definition
 fptr_type       :
-                FPTR SMALLER ((type_specifier COMMA)* type_specifier)* ARROW type_specifier GREATER
+                FPTR SMALLER (((type_specifier|VOID) COMMA)* (type_specifier | VOID))* ARROW type_specifier GREATER
                 ;
+fptr_accessor   :
+                FPTR SMALLER (((type_specifier | VOID) ARROW (type_specifier|VOID)) GREATER);
 
 list_type       :
                 (LIST SHARPSIGN type_specifier)
                 ;
 list_accessor   :
-                (NAMING_CONVENTION LBRACKET INTEGER RBRACKET)
+                ((NAMING_CONVENTION | append_dec) LBRACKET INTEGER RBRACKET (LBRACKET INTEGER RBRACKET)*)
                 ;
 
 built_in_data_type      :
@@ -314,6 +331,8 @@ UNDERLINE: '_';
 GREATER: '>';
 SMALLER: '<';
 COMMA: ',';
+AND: '&';
+OR: '|';
 GREATER_AND_EQUAL: ('>=' | '=>');
 SMALLER_AND_EQUAL: ('<=' | '=<');
 //WS: (' ' | '\t' | '\n') -> skip;
@@ -323,6 +342,7 @@ DOT: '.';
 TAB: '\t';
 LBRACKET: '[';
 RBRACKET: ']';
+TILDA : '~';
 
 keywords : (APPEND | SIZE | TRUE | FALSE | FPTR | DISPLAY | STRUCT | MAIN | INT | BOOL | LIST | VOID | WHILE | DO | IF | ENDIF | ELSE | RETURN | GET | SET | BEGIN | END);
 
@@ -336,4 +356,4 @@ type_specifier
     ;
 
 Whitespace: ([ \t]+ | Linebreak) -> skip;
-Linebreak: [\r\n];
+Linebreak: [\r\n]+;

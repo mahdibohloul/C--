@@ -1,4 +1,4 @@
-// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
+// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
 package com.plc.cmm;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -100,6 +100,12 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTerm(CmmParser.TermContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#struct_accessor}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStruct_accessor(CmmParser.Struct_accessorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#return_statement}.
 	 * @param ctx the parse tree
@@ -220,6 +226,12 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBuilt_in_data_type(CmmParser.Built_in_data_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#keywords}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeywords(CmmParser.KeywordsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#type_specifier}.
 	 * @param ctx the parse tree
