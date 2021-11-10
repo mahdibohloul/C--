@@ -1,4 +1,4 @@
-// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
+// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
 package com.plc.cmm;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -128,16 +128,6 @@ public interface CmmListener extends ParseTreeListener {
 	 */
 	void exitStatement(CmmParser.StatementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link CmmParser#assignment}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssignment(CmmParser.AssignmentContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link CmmParser#assignment}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssignment(CmmParser.AssignmentContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link CmmParser#expression}.
 	 * @param ctx the parse tree
 	 */
@@ -178,16 +168,6 @@ public interface CmmListener extends ParseTreeListener {
 	 */
 	void exitReturn_statement(CmmParser.Return_statementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link CmmParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void enterDeclaration(CmmParser.DeclarationContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link CmmParser#declaration}.
-	 * @param ctx the parse tree
-	 */
-	void exitDeclaration(CmmParser.DeclarationContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link CmmParser#argument}.
 	 * @param ctx the parse tree
 	 */
@@ -197,6 +177,26 @@ public interface CmmListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArgument(CmmParser.ArgumentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CmmParser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssignment(CmmParser.AssignmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CmmParser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssignment(CmmParser.AssignmentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CmmParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterDeclaration(CmmParser.DeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CmmParser#declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitDeclaration(CmmParser.DeclarationContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CmmParser#display}.
 	 * @param ctx the parse tree
@@ -337,6 +337,16 @@ public interface CmmListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFptr_type(CmmParser.Fptr_typeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CmmParser#fptr_accessor}.
+	 * @param ctx the parse tree
+	 */
+	void enterFptr_accessor(CmmParser.Fptr_accessorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CmmParser#fptr_accessor}.
+	 * @param ctx the parse tree
+	 */
+	void exitFptr_accessor(CmmParser.Fptr_accessorContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CmmParser#list_type}.
 	 * @param ctx the parse tree
