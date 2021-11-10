@@ -1,4 +1,4 @@
-// Generated from /home/mohadeseh/Desktop/UT/Compiler/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.2
+// Generated from /home/tapsi/codes/c--/src/com/plc/cmm/Cmm.g4 by ANTLR 4.9.1
 package com.plc.cmm;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -83,12 +83,6 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(CmmParser.StatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CmmParser#assignment}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssignment(CmmParser.AssignmentContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link CmmParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -113,17 +107,23 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReturn_statement(CmmParser.Return_statementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CmmParser#declaration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDeclaration(CmmParser.DeclarationContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link CmmParser#argument}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitArgument(CmmParser.ArgumentContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#assignment}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssignment(CmmParser.AssignmentContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#declaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDeclaration(CmmParser.DeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#display}.
 	 * @param ctx the parse tree
@@ -208,6 +208,12 @@ public interface CmmVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFptr_type(CmmParser.Fptr_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CmmParser#fptr_accessor}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFptr_accessor(CmmParser.Fptr_accessorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CmmParser#list_type}.
 	 * @param ctx the parse tree
