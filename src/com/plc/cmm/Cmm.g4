@@ -5,9 +5,8 @@ grammar Cmm;
 
 // This class defines a complete generic visitor for a parse tree produced by CmmParser.
 //cmm : (struct)* (function_definition)* main;
-cmm : (comment)* (struct)* (comment)* (function_definition)* (comment)* main;  //MOHADESE
+cmm : (struct)* (function_definition)* main;  //MOHADESE
 //COMENT DEFINITION
-comment      : '/*' (ALPHABET | INTEGER)* '*/' ;
 
 //STRUCT DEFINITION
 struct          :
@@ -194,9 +193,9 @@ scope_body_with_return :
                 (scope_body)* return_statement
                 ;
 
-scope_body      : comment? (statement SEMICOLON?) comment?;
+scope_body      : statement SEMICOLON?;
 
-scope_body_one_line     : comment? (statement) comment? ;
+scope_body_one_line     : statement;
 
 //CONDITIONAL OPERATIONS
 if_stament      :
@@ -354,6 +353,8 @@ type_specifier
     :
     (built_in_data_type | STRUCT NAMING_CONVENTION | list_accessor)
     ;
+ SPACE: ' ';
+CM: ('/*' ( SPACE |ALPHABET | INTEGER )* '*/')+ -> skip;
 
 Whitespace: ([ \t]+ | Linebreak) -> skip;
 Linebreak: [\r\n]+;
