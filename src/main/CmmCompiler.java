@@ -14,6 +14,6 @@ public class CmmCompiler {
 
         Program program = cmmParser.cmm().cmmProgram;
 
-        //todo
+        program.toString();
     }
 }
