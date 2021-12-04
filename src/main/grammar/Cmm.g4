@@ -73,11 +73,11 @@ functionArguments returns[ExprInPar functionArgumentsRet;] :
     ;
 
 //todo
-body :
+body returns [Statement bodyRet]:
      (blockStatement | (NEWLINE+ singleStatement (SEMICOLON)?));
 
 //todo
-loopCondBody :
+loopCondBody returns[Statement loopCondBodyRet]:
      (blockStatement | (NEWLINE+ singleStatement ));
 
 //todo
@@ -92,40 +92,74 @@ varDecStatement :
 functionCallStmt :
      otherExpression ((LPAR functionArguments RPAR) | (DOT identifier))* (LPAR functionArguments RPAR);
 
-//todo
-returnStatement :
-    RETURN (expression)?;
+returnStatement returns[ReturnStmt returnStatementRet]:
+    {$returnStatementRet = new ReturnStmt();}
+    r = RETURN {$returnStatementRet.setLine($r.line);}
+    (expression {$returnStatementRet.setReturnedExpr($expression.expressionRet);})?;
+
+ifStatement returns[ConditionalStmt ifStatementRet]:
+    {
+        $ifStatementRet = new ConditionalStmt();
+    }
+    i = IF {$ifStatementRet.setLine($i.line);} expression {$ifStatementRet.setCondition($expression.expressionRet);}
+    (loopCondBody {$ifStatementRet.setThenBody($loopCondBody.loopCondBodyRet);} |
+    body elseStatement
+    {
+        $ifStatementRet.setThenBody($body.bodyRet);
+        $ifStatementRet.setElseBody($elseStatement.elseStatementRet);
+    });
+
+elseStatement returns[Statement elseStatementRet]:
+     NEWLINE* ELSE loopCondBody {$elseStatementRet = $loopCondBody.loopCondBodyRet;};
+
+loopStatement returns [LoopStmt loopStatementRet;]:
+    whileLoopStatement {$loopStatementRet = $whileLoopStatement.whileLoopStatementRet} |
+    doWhileLoopStatement {$loopStatementRet = $doWhileLoopStatement.doWhileLoopStatementRet}
+    ;
+
+whileLoopStatement returns [LoopStmt whileLoopStatementRet]:
+    w = WHILE expression loopCondBody
+    {
+        $whileLoopStatementRet = new LoopStmt();
+        $whileLoopStatementRet.setCondition($expression.expressionRet);
+        $whileLoopStatementRet.setBody($loopCondBody.loopCondBodyRet);
+        $whileLoopStatementRet.setLine($w.line);
+    };
+
+doWhileLoopStatement returns[LoopStmt doWhileLoopStatementRet]:
+    d = DO body NEWLINE* WHILE expression
+    {
+        $doWhileLoopStatementRet = new LoopStmt();
+        $doWhileLoopStatementRet.setCondition($expression.expressionRet);
+        $doWhileLoopStatementRet.setBody($body.bodyRet);
+        $doWhileLoopStatementRet.setLine($d.getLine());
+    }
+    ;
+
+displayStatement returns [DisplayStmt displayStatementRet;]:
+
+  d = DISPLAY LPAR expression RPAR
+  {
+      $displayStatementRet = new DisplayStmt($expression.expressionRet);
+      $displayStatementRet.setLine($d.line);
+  }
+  ;
+
+assignmentStatement returns [AssignmentStmt assignmentStmtRet]:
+    {
+        Expression lhs = null;
+        Expression rhs = null;
+    }
+    orExpression {lhs = $orExpression.orExpressionRet;}
+    a = ASSIGN expression {rhs = $expression.expressionRet;}
+    {
+        $assignmentStmtRet = new AssignmentStmt(lhs, rhs);
+        $assignmentStmtRet.setLine($a.line);
+    }
+    ;
 
 //todo
-ifStatement :
-    IF expression (loopCondBody | body elseStatement);
-
-//todo
-elseStatement :
-     NEWLINE* ELSE loopCondBody;
-
-//todo
-loopStatement :
-    whileLoopStatement | doWhileLoopStatement;
-
-//todo
-whileLoopStatement :
-    WHILE expression loopCondBody;
-
-//todo
-doWhileLoopStatement :
-    DO body NEWLINE* WHILE expression;
-
-//todo
-displayStatement :
-  DISPLAY LPAR expression RPAR;
-
-//todo
-assignmentStatement :
-    orExpression ASSIGN expression;
-
-//todo
-singleStatement :
+singleStatement returns [Statement singleStatementRet]:
     ifStatement | displayStatement | functionCallStmt | returnStatement | assignmentStatement
     | varDecStatement | loopStatement | append | size;
 
