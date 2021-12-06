@@ -10,9 +10,13 @@ public class ListSizeStmt extends Statement{
 
     public ListSizeStmt(ListSize listSizeExpr) {
         this.listSizeExpr = listSizeExpr;
+        this.setLine(listSizeExpr.getLine());
     }
 
-    public void setListSizeExpr(ListSize listSizeExpr) { this.listSizeExpr = listSizeExpr; }
+    public void setListSizeExpr(ListSize listSizeExpr) {
+        this.listSizeExpr = listSizeExpr;
+        this.setLine(listSizeExpr.getLine());
+    }
     public Expression getListSizeExpr() { return listSizeExpr; }
 
     @Override

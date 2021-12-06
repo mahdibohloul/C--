@@ -25,43 +25,76 @@ program returns[Program programRet]:
     (f = functionDeclaration {$programRet.addFunction($f.functionDeclarationRet);})*
     m = main {$programRet.setMain($m.mainRet);};
 
-//todo
 main returns[MainDeclaration mainRet]:
-    MAIN LPAR RPAR body;
+    m = MAIN LPAR RPAR body
+    {
+        $mainRet = new MainDeclaration();
+        $mainRet.setBody($body.bodyRet);
+        $mainRet.setLine($m.line);
+    };
 
-//todo
 structDeclaration returns[StructDeclaration structDeclarationRet]:
-    STRUCT identifier ((BEGIN structBody NEWLINE+ END) | (NEWLINE+ singleStatementStructBody SEMICOLON?)) NEWLINE+;
+    {$structDeclarationRet = new StructDeclaration();}
+    s = STRUCT  {$structDeclarationRet.setLine($s.line);}
+    identifier {$structDeclarationRet.setStructName($identifier.identifierRet);}
+    ((b = BEGIN structBody NEWLINE+ END
+    {
+        BlockStmt blockStmt = new BlockStmt();
+        blockStmt.setLine($b.line);
+        blockStmt.setStatements($structBody.structBodyRet);
+        $structDeclarationRet.setBody(blockStmt);
+    }) |
+    (NEWLINE+ singleStatementStructBody
+    {
+        $structDeclarationRet.setBody($singleStatementStructBody.singleStatementStructBodyRet);
+    }
+     SEMICOLON?)) NEWLINE+;
 
-//todo
-singleVarWithGetAndSet :
-    type identifier functionArgsDec BEGIN NEWLINE+ setBody getBody END;
+singleVarWithGetAndSet returns[SetGetVarDeclaration singleVarWithGetAndSetRet]:
+    {$singleVarWithGetAndSetRet = new SetGetVarDeclaration();}
+    type identifier functionArgsDec BEGIN NEWLINE+ setBody getBody END
+    {
+        $singleVarWithGetAndSetRet.setVarName($identifier.identifierRet);
+        $singleVarWithGetAndSetRet.setVarType($type.typeRet);
+        $singleVarWithGetAndSetRet.setArgs($functionArgsDec.functionArgsDecRet);
+        $singleVarWithGetAndSetRet.setSetterBody($setBody.setBodyRet);
+        $singleVarWithGetAndSetRet.setGetterBody($getBody.getBodyRet);
+    };
 
-//todo
-singleStatementStructBody :
-    varDecStatement | singleVarWithGetAndSet;
+singleStatementStructBody returns[Statement singleStatementStructBodyRet]:
+    varDecStatement {$singleStatementStructBodyRet = $varDecStatement.varDecStatementRet;} |
+    singleVarWithGetAndSet {$singleStatementStructBodyRet = $singleVarWithGetAndSet.singleVarWithGetAndSetRet;}
+    ;
 
-//todo
-structBody :
-    (NEWLINE+ (singleStatementStructBody SEMICOLON)* singleStatementStructBody SEMICOLON?)+;
+structBody returns[ArrayList<Statement> structBodyRet]:
+    {$structBodyRet = new ArrayList<Statement>();}
+    (NEWLINE+ (singleStatementStructBody {$structBodyRet.add($singleStatementStructBody.singleStatementStructBodyRet);} SEMICOLON)*
+    singleStatementStructBody {$structBodyRet.add($singleStatementStructBody.singleStatementStructBodyRet);} SEMICOLON?)+;
 
-//todo
-getBody :
-    GET body NEWLINE+;
+getBody returns[Statement getBodyRet]:
+    GET body {$getBodyRet = $body.bodyRet;} NEWLINE+;
 
-//todo
-setBody :
-    SET body NEWLINE+;
+setBody returns[Statement setBodyRet]:
+    SET body {$setBodyRet = $body.bodyRet;} NEWLINE+;
 
-//todo
 functionDeclaration returns[FunctionDeclaration functionDeclarationRet]:
-    (type | VOID ) identifier functionArgsDec body NEWLINE+;
+    (type | VOID ) identifier functionArgsDec body NEWLINE+
+    {
+        $functionDeclarationRet = new FunctionDeclaration();
+        $functionDeclarationRet.setReturnType($type.typeRet);
+        $functionDeclarationRet.setFunctionName($identifier.identifierRet);
+        $functionDeclarationRet.setArgs($functionArgsDec.functionArgsDecRet);
+        $functionDeclarationRet.setBody($body.bodyRet);
+    };
 
-//todo
-functionArgsDec :
-    LPAR (type identifier (COMMA type identifier)*)? RPAR ;
+functionArgsDec returns[ArrayList<VariableDeclaration> functionArgsDecRet]:
+    {
+        $functionArgsDecRet = new ArrayList<VariableDeclaration>();
+    }
+    LPAR (type identifier {$functionArgsDecRet.add(new VariableDeclaration($identifier.identifierRet, $type.typeRet));}
+    (COMMA type identifier {$functionArgsDecRet.add(new VariableDeclaration($identifier.identifierRet, $type.typeRet));})*)? RPAR ;
 
-functionArguments returns[ExprInPar functionArgumentsRet;] :
+functionArguments returns[ExprInPar functionArgumentsRet] :
     {
         ArrayList<Expression> inputs = new ArrayList<>();
     }
@@ -72,25 +105,75 @@ functionArguments returns[ExprInPar functionArgumentsRet;] :
     }
     ;
 
-//todo
 body returns [Statement bodyRet]:
-     (blockStatement | (NEWLINE+ singleStatement (SEMICOLON)?));
+     (blockStatement {$bodyRet = $blockStatement.blockStatementRet;}|
+     (NEWLINE+ singleStatement {$bodyRet = $singleStatement.singleStatementRet;} (SEMICOLON)?));
 
-//todo
 loopCondBody returns[Statement loopCondBodyRet]:
-     (blockStatement | (NEWLINE+ singleStatement ));
+     (blockStatement {$loopCondBodyRet = $blockStatement.blockStatementRet;}|
+     (NEWLINE+ singleStatement {$loopCondBodyRet = $singleStatement.singleStatementRet;}));
 
-//todo
-blockStatement :
-    BEGIN (NEWLINE+ (singleStatement SEMICOLON)* singleStatement (SEMICOLON)?)+ NEWLINE+ END;
+blockStatement returns[BlockStmt blockStatementRet]:
+    {$blockStatementRet = new BlockStmt();}
+    b = BEGIN {$blockStatementRet.setLine($b.line);}
+    (NEWLINE+ (singleStatement {$blockStatementRet.addStatement($singleStatement.singleStatementRet);} SEMICOLON)*
+    singleStatement {$blockStatementRet.addStatement($singleStatement.singleStatementRet);}(SEMICOLON)?)+ NEWLINE+ END;
 
-//todo
-varDecStatement :
-    type identifier (ASSIGN orExpression )? (COMMA identifier (ASSIGN orExpression)? )*;
+varDecStatement returns[VarDecStmt varDecStatementRet]:
+    {
+        $varDecStatementRet = new VarDecStmt();
+        ArrayList<VariableDeclaration> vars = new ArrayList<>();
+    }
+    (
+    {VariableDeclaration v = null;}
+    type identifier
+    {
+        $varDecStatementRet.setLine($identifier.identifierRet.getLine());
+        v = new VariableDeclaration($identifier.identifierRet, $type.typeRet);
+        v.setLine($identifier.identifierRet.getLine());
+        vars.add(v);
+    }
+    (ASSIGN orExpression {v.setDefaultValue($orExpression.orExpressionRet);} )?
+    )
+    (
+    {VariableDeclaration v1 = null;}
+    COMMA identifier
+    {
+        v1 = new VariableDeclaration($identifier.identifierRet, $type.typeRet);
+        v1.setLine($identifier.identifierRet.getLine());
+        vars.add(v1);
+    } (ASSIGN orExpression {v1.setDefaultValue($orExpression.orExpressionRet);} )?
+    )*
+    {
+        $varDecStatementRet.setVars(vars);
+    }
+    ;
 
-//todo
-functionCallStmt :
-     otherExpression ((LPAR functionArguments RPAR) | (DOT identifier))* (LPAR functionArguments RPAR);
+functionCallStmt returns[FunctionCallStmt functionCallStmtRet]:
+     otherExpression {Expression prev = $otherExpression.otherExpressionRet;}
+     (
+     (l = LPAR functionArguments RPAR
+     {
+        FunctionCall f = new FunctionCall(prev);
+        f.setArgs($functionArguments.functionArgumentsRet.getInputs());
+        f.setLine($l.line);
+        prev = f;
+     }
+     ) |
+     (d = DOT identifier
+     {
+        StructAccess sa = new StructAccess(prev, $identifier.identifierRet);
+        sa.setLine($d.line);
+        prev = sa;
+     }
+     )
+     )* (l = LPAR functionArguments RPAR
+     {
+        FunctionCall f = new FunctionCall(prev, $functionArguments.functionArgumentsRet.getInputs());
+        f.setLine($l.line);
+        $functionCallStmtRet = new FunctionCallStmt(f);
+     }
+     );
 
 returnStatement returns[ReturnStmt returnStatementRet]:
     {$returnStatementRet = new ReturnStmt();}
@@ -98,10 +181,11 @@ returnStatement returns[ReturnStmt returnStatementRet]:
     (expression {$returnStatementRet.setReturnedExpr($expression.expressionRet);})?;
 
 ifStatement returns[ConditionalStmt ifStatementRet]:
+    i = IF expression
     {
-        $ifStatementRet = new ConditionalStmt();
+        $ifStatementRet = new ConditionalStmt($expression.expressionRet);
+        $ifStatementRet.setLine($i.line);
     }
-    i = IF {$ifStatementRet.setLine($i.line);} expression {$ifStatementRet.setCondition($expression.expressionRet);}
     (loopCondBody {$ifStatementRet.setThenBody($loopCondBody.loopCondBodyRet);} |
     body elseStatement
     {
@@ -112,9 +196,9 @@ ifStatement returns[ConditionalStmt ifStatementRet]:
 elseStatement returns[Statement elseStatementRet]:
      NEWLINE* ELSE loopCondBody {$elseStatementRet = $loopCondBody.loopCondBodyRet;};
 
-loopStatement returns [LoopStmt loopStatementRet;]:
-    whileLoopStatement {$loopStatementRet = $whileLoopStatement.whileLoopStatementRet} |
-    doWhileLoopStatement {$loopStatementRet = $doWhileLoopStatement.doWhileLoopStatementRet}
+loopStatement returns [LoopStmt loopStatementRet]:
+    whileLoopStatement {$loopStatementRet = $whileLoopStatement.whileLoopStatementRet;} |
+    doWhileLoopStatement {$loopStatementRet = $doWhileLoopStatement.doWhileLoopStatementRet;}
     ;
 
 whileLoopStatement returns [LoopStmt whileLoopStatementRet]:
@@ -136,7 +220,7 @@ doWhileLoopStatement returns[LoopStmt doWhileLoopStatementRet]:
     }
     ;
 
-displayStatement returns [DisplayStmt displayStatementRet;]:
+displayStatement returns [DisplayStmt displayStatementRet]:
 
   d = DISPLAY LPAR expression RPAR
   {
@@ -145,7 +229,7 @@ displayStatement returns [DisplayStmt displayStatementRet;]:
   }
   ;
 
-assignmentStatement returns [AssignmentStmt assignmentStmtRet]:
+assignmentStatement returns [AssignmentStmt assignmentStatementRet]:
     {
         Expression lhs = null;
         Expression rhs = null;
@@ -153,18 +237,24 @@ assignmentStatement returns [AssignmentStmt assignmentStmtRet]:
     orExpression {lhs = $orExpression.orExpressionRet;}
     a = ASSIGN expression {rhs = $expression.expressionRet;}
     {
-        $assignmentStmtRet = new AssignmentStmt(lhs, rhs);
-        $assignmentStmtRet.setLine($a.line);
+        $assignmentStatementRet = new AssignmentStmt(lhs, rhs);
+        $assignmentStatementRet.setLine($a.line);
     }
     ;
 
-//todo
 singleStatement returns [Statement singleStatementRet]:
-    ifStatement | displayStatement | functionCallStmt | returnStatement | assignmentStatement
-    | varDecStatement | loopStatement | append | size;
+    ifStatement {$singleStatementRet = $ifStatement.ifStatementRet;} |
+    displayStatement {$singleStatementRet = $displayStatement.displayStatementRet;} |
+    functionCallStmt {$singleStatementRet = $functionCallStmt.functionCallStmtRet;} |
+    returnStatement {$singleStatementRet = $returnStatement.returnStatementRet;} |
+    assignmentStatement {$singleStatementRet = $assignmentStatement.assignmentStatementRet;} |
+    varDecStatement {$singleStatementRet = $varDecStatement.varDecStatementRet;} |
+    loopStatement {$singleStatementRet = $loopStatement.loopStatementRet;} |
+    append {$singleStatementRet = new ListAppendStmt($append.appendRet);} |
+    size {$singleStatementRet = new ListSizeStmt($size.sizeRet);};
 
-expression returns[Expression expressionRet;]:
-    {BinaryExpression prev = null;}
+expression returns[Expression expressionRet]:
+    {Expression prev = null;}
     orExpression {prev = $orExpression.orExpressionRet;}
     (op = ASSIGN expression
     {
@@ -177,8 +267,8 @@ expression returns[Expression expressionRet;]:
     {$expressionRet = prev;}
     ;
 
-orExpression returns[BinaryExpression orExpressionRet;]:
-    {BinaryExpression prev = null;}
+orExpression returns[Expression orExpressionRet]:
+    {Expression prev = null;}
     ae1 = andExpression {prev = $ae1.andExpressionRet;}
     (op = OR ae2 = andExpression
     {
@@ -191,8 +281,8 @@ orExpression returns[BinaryExpression orExpressionRet;]:
     {$orExpressionRet = prev;}
     ;
 
-andExpression returns[BinaryExpression andExpressionRet;]:
-    {BinaryExpression prev = null;}
+andExpression returns[Expression andExpressionRet]:
+    {Expression prev = null;}
     ex1 = equalityExpression {prev = $ex1.equalityExpressionRet;}
     (op = AND ex2 = equalityExpression
     {
@@ -205,8 +295,8 @@ andExpression returns[BinaryExpression andExpressionRet;]:
     {$andExpressionRet = prev;}
     ;
 
-equalityExpression returns[BinaryExpression equalityExpressionRet;]:
-    {BinaryExpression prev = null;}
+equalityExpression returns[Expression equalityExpressionRet]:
+    {Expression prev = null;}
     re1 = relationalExpression {prev = $re1.relationalExpressionRet;}
     (op = EQUAL relationalExpression
     {
@@ -219,8 +309,8 @@ equalityExpression returns[BinaryExpression equalityExpressionRet;]:
     {$equalityExpressionRet = prev;}
     ;
 
-relationalExpression returns[BinaryExpression relationalExpressionRet;]:
-    {BinaryExpression prev = null;}
+relationalExpression returns[Expression relationalExpressionRet]:
+    {Expression prev = null;}
     ae = additiveExpression {prev = $ae.additiveExpressionRet;}
     ((op = GREATER_THAN | op = LESS_THAN) additiveExpression
     {
@@ -238,8 +328,8 @@ relationalExpression returns[BinaryExpression relationalExpressionRet;]:
     {$relationalExpressionRet = prev;}
     ;
 
-additiveExpression returns[BinaryExpression additiveExpressionRet;]:
-    {BinaryExpression prev = null;}
+additiveExpression returns[Expression additiveExpressionRet]:
+    {Expression prev = null;}
     me = multiplicativeExpression {prev = $me.multiplicativeExpressionRet;}
     ((op = PLUS | op = MINUS) multiplicativeExpression
     {
@@ -257,14 +347,14 @@ additiveExpression returns[BinaryExpression additiveExpressionRet;]:
     {$additiveExpressionRet = prev;}
     ;
 
-multiplicativeExpression returns[BinaryExpression multiplicativeExpressionRet;]:
-    {BinaryExpression prev = null;}
+multiplicativeExpression returns[Expression multiplicativeExpressionRet]:
+    {Expression prev = null;}
     pue = preUnaryExpression {prev = $pue.preUnaryExpressionRet;}
     ((op = MULT | op = DIVIDE) preUnaryExpression
     {
         BinaryOperator op = null;
         if($op.text == "*")
-            op = BinaryOperator.mul;
+            op = BinaryOperator.mult;
         else
             op = BinaryOperator.div;
         prev = new BinaryExpression(prev,
@@ -276,7 +366,7 @@ multiplicativeExpression returns[BinaryExpression multiplicativeExpressionRet;]:
     {$multiplicativeExpressionRet = prev;}
     ;
 
-preUnaryExpression returns[Expression preUnaryExpressionRet;]:
+preUnaryExpression returns[Expression preUnaryExpressionRet]:
     ((op = NOT | op = MINUS) preUnaryExpression ) {
         UnaryExpression curr = null;
         if($op.text == "~")
@@ -291,15 +381,15 @@ preUnaryExpression returns[Expression preUnaryExpressionRet;]:
     accessExpression {$preUnaryExpressionRet = $accessExpression.accessExpressionRet;}
     ;
 
-accessExpression returns[Expression accessExpressionRet;]:
-    {Expression prev = null;}
+accessExpression returns[Expression accessExpressionRet]:
     otherExpression
+    {Expression prev = $otherExpression.otherExpressionRet;}
     ((
     l = LPAR
     functionArguments
     RPAR
     {
-        FunctionCall f = new FunctionCall($otherExpression.otherExpressionRet);
+        FunctionCall f = new FunctionCall(prev);
         f.setArgs($functionArguments.functionArgumentsRet.getInputs());
         f.setLine($l.line);
         prev = f;
@@ -336,7 +426,7 @@ accessExpression returns[Expression accessExpressionRet;]:
     {$accessExpressionRet = prev;}
     ;
 
-otherExpression returns[Expression otherExpressionRet;]:
+otherExpression returns[Expression otherExpressionRet]:
     v = value {$otherExpressionRet = $v.valueRet;} |
     i = identifier {$otherExpressionRet = $i.identifierRet;} |
     l = LPAR
@@ -350,14 +440,14 @@ otherExpression returns[Expression otherExpressionRet;]:
     a = append {$otherExpressionRet = $a.appendRet;}
     ;
 
-size returns[ListSize sizeRet;]:
+size returns[ListSize sizeRet]:
     {Expression arg = null;}
     s = SIZE LPAR
     e = expression {$sizeRet = new ListSize($e.expressionRet);}
     RPAR
     {$sizeRet.setLine($s.line);};
 
-append returns[ListAppend appendRet;]:
+append returns[ListAppend appendRet]:
     {
     Expression listArg = null;
     Expression elementArg = null;
@@ -370,25 +460,25 @@ append returns[ListAppend appendRet;]:
     $appendRet.setLine($a.line);
     };
 
-value returns[Value valueRet;] :
+value returns[Value valueRet] :
     b = boolValue {$valueRet = $b.boolValueRet;} |
     i = INT_VALUE {$valueRet = new IntValue($i.int); $valueRet.setLine($i.line);};
 
-boolValue returns[BoolValue boolValueRet;]:
+boolValue returns[BoolValue boolValueRet]:
     t = TRUE {$boolValueRet = new BoolValue(true); $boolValueRet.setLine($t.line);}
     |
     f = FALSE {$boolValueRet = new BoolValue(false); $boolValueRet.setLine($f.line);};
 
-identifier returns[Itentifier identifierRet;]:
+identifier returns[Identifier identifierRet]:
     i = IDENTIFIER {$identifierRet = new Identifier($i.text);
                     $identifierRet.setLine($i.line);};
 
-type returns[Type typeRet;]:
+type returns[Type typeRet]:
     INT { $typeRet = new IntType(); } |
     BOOL { $typeRet = new BoolType(); } |
     LIST SHARP t = type { $typeRet = new ListType($t.typeRet); } |
     STRUCT i = identifier { $typeRet = new StructType($i.identifierRet); } |
-    f = fptrType {$typeRet = f.fptrTypeRet;}
+    f = fptrType {$typeRet = $f.fptrTypeRet;}
     ;
 
 fptrType returns[FptrType fptrTypeRet]:
