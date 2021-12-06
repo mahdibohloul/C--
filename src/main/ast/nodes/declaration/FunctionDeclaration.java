@@ -20,6 +20,7 @@ public class FunctionDeclaration extends Declaration {
     }
     public void setFunctionName(Identifier functionName) {
         this.functionName = functionName;
+        this.setLine(functionName.getLine());
     }
 
     public ArrayList<VariableDeclaration> getArgs() {

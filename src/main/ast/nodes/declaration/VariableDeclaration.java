@@ -14,6 +14,7 @@ public class VariableDeclaration extends Declaration{
     public VariableDeclaration(Identifier varName, Type varType) {
         this.varName = varName;
         this.varType = varType;
+        this.setLine(varName.getLine());
     }
 
     public Identifier getVarName() {
@@ -21,6 +22,7 @@ public class VariableDeclaration extends Declaration{
     }
     public void setVarName(Identifier varName) {
         this.varName = varName;
+        this.setLine(varName.getLine());
     }
 
     public Type getVarType() {

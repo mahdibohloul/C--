@@ -10,9 +10,13 @@ public class ListAppendStmt extends Statement{
 
     public ListAppendStmt(ListAppend listAppendExpr) {
         this.listAppendExpr = listAppendExpr;
+        this.setLine(listAppendExpr.getLine());
     }
 
-    public void setListAppendExpr(ListAppend listAppendExpr) { this.listAppendExpr = listAppendExpr; }
+    public void setListAppendExpr(ListAppend listAppendExpr) {
+        this.listAppendExpr = listAppendExpr;
+        this.setLine(listAppendExpr.getLine());
+    }
     public Expression getListAppendExpr() { return listAppendExpr; }
 
     @Override

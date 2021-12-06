@@ -9,6 +9,7 @@ public class FunctionCallStmt extends Statement{
 
     public FunctionCallStmt(FunctionCall funcCall) {
         this.funcCall = funcCall;
+        this.setLine(funcCall.getLine());
     }
 
     public FunctionCall getFunctionCall() {

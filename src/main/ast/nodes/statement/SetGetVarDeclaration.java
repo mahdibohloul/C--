@@ -20,6 +20,7 @@ public class SetGetVarDeclaration extends Statement {
     }
     public void setVarName(Identifier varName) {
         this.varName = varName;
+        this.setLine(varName.getLine());
     }
 
     public Type getVarType() {
