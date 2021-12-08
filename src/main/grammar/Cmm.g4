@@ -26,12 +26,8 @@ program returns[Program programRet]:
     m = main {$programRet.setMain($m.mainRet);};
 
 main returns[MainDeclaration mainRet]:
-    m = MAIN LPAR RPAR body
-    {
-        $mainRet = new MainDeclaration();
-        $mainRet.setBody($body.bodyRet);
-        $mainRet.setLine($m.line);
-    };
+    {$mainRet = new MainDeclaration();}
+    m = MAIN {$mainRet.setLine($m.line);} LPAR RPAR b = body {$mainRet.setBody($b.bodyRet);};
 
 structDeclaration returns[StructDeclaration structDeclarationRet]:
     {$structDeclarationRet = new StructDeclaration();}
@@ -78,14 +74,13 @@ setBody returns[Statement setBodyRet]:
     SET body {$setBodyRet = $body.bodyRet;} NEWLINE+;
 
 functionDeclaration returns[FunctionDeclaration functionDeclarationRet]:
-    (type | VOID ) identifier functionArgsDec body NEWLINE+
-    {
-        $functionDeclarationRet = new FunctionDeclaration();
-        $functionDeclarationRet.setReturnType($type.typeRet);
-        $functionDeclarationRet.setFunctionName($identifier.identifierRet);
-        $functionDeclarationRet.setArgs($functionArgsDec.functionArgsDecRet);
-        $functionDeclarationRet.setBody($body.bodyRet);
-    };
+    {$functionDeclarationRet = new FunctionDeclaration();}
+    (type {$functionDeclarationRet.setReturnType($type.typeRet);} |
+    VOID {$functionDeclarationRet.setReturnType(new VoidType());})
+    i = identifier {$functionDeclarationRet.setFunctionName($i.identifierRet);}
+    f = functionArgsDec {$functionDeclarationRet.setArgs($f.functionArgsDecRet);}
+    b = body {$functionDeclarationRet.setBody($b.bodyRet);} NEWLINE+
+    ;
 
 functionArgsDec returns[ArrayList<VariableDeclaration> functionArgsDecRet]:
     {
@@ -315,7 +310,7 @@ relationalExpression returns[Expression relationalExpressionRet]:
     ((op = GREATER_THAN | op = LESS_THAN) additiveExpression
     {
         BinaryOperator op = null;
-        if($op.text == ">")
+        if($op.text.equalsIgnoreCase(">"))
             op = BinaryOperator.gt;
         else
             op = BinaryOperator.lt;
@@ -334,7 +329,7 @@ additiveExpression returns[Expression additiveExpressionRet]:
     ((op = PLUS | op = MINUS) multiplicativeExpression
     {
         BinaryOperator op = null;
-        if($op.text == "+")
+        if($op.text.equalsIgnoreCase("+"))
             op = BinaryOperator.add;
         else
             op = BinaryOperator.sub;
@@ -353,7 +348,7 @@ multiplicativeExpression returns[Expression multiplicativeExpressionRet]:
     ((op = MULT | op = DIVIDE) preUnaryExpression
     {
         BinaryOperator op = null;
-        if($op.text == "*")
+        if($op.text.equalsIgnoreCase("*"))
             op = BinaryOperator.mult;
         else
             op = BinaryOperator.div;
@@ -369,7 +364,7 @@ multiplicativeExpression returns[Expression multiplicativeExpressionRet]:
 preUnaryExpression returns[Expression preUnaryExpressionRet]:
     ((op = NOT | op = MINUS) preUnaryExpression ) {
         UnaryExpression curr = null;
-        if($op.text == "~")
+        if($op.text.equalsIgnoreCase("~"))
             curr = new UnaryExpression($preUnaryExpression.preUnaryExpressionRet,
                                     UnaryOperator.not);
         else
@@ -411,6 +406,7 @@ accessExpression returns[Expression accessExpressionRet]:
     {
         ListAccessByIndex l = new ListAccessByIndex(prev, $expression.expressionRet);
         l.setLine($l.line);
+        prev = l;
     }
     ) |
     (

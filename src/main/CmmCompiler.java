@@ -1,10 +1,11 @@
 package main;
 
 import main.ast.nodes.Program;
+import main.grammar.CmmLexer;
+import main.grammar.CmmParser;
+import main.visitor.name.ASTTreePrinter;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import parsers.CmmLexer;
-import parsers.CmmParser;
 
 public class CmmCompiler {
     public void compile(CharStream textStream) {
@@ -13,7 +14,7 @@ public class CmmCompiler {
         CmmParser cmmParser = new CmmParser(tokenStream);
 
         Program program = cmmParser.cmm().cmmProgram;
-
-        program.toString();
+        ASTTreePrinter astTreePrinter = new ASTTreePrinter();
+        program.accept(astTreePrinter);
     }
 }
