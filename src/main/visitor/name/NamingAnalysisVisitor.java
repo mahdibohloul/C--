@@ -114,7 +114,8 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
     @Override
     public Void visit(SetGetVarDeclaration setGetVarDeclaration) {
         if (!checkArgs) {
-            VariableDeclaration variableDeclaration = new VariableDeclaration(setGetVarDeclaration.getVarName(), setGetVarDeclaration.getVarType());
+            VariableDeclaration variableDeclaration = new VariableDeclaration(setGetVarDeclaration.getVarName(),
+                    setGetVarDeclaration.getVarType());
             variableDeclaration.accept(this);
             setGetVarDeclaration.addErrors(variableDeclaration.flushErrors());
         } else {
