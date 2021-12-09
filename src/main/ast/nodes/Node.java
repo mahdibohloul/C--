@@ -21,10 +21,15 @@ public abstract class Node {
     }
 
     public abstract String toString();
+
     public void addError(CompileError e) {
-        if(Node.isCatchErrorsActive) {
+        if (Node.isCatchErrorsActive) {
             this.errors.add(e);
         }
+    }
+
+    public void addErrors(ArrayList<CompileError> errors) {
+        this.errors.addAll(errors);
     }
 
     public ArrayList<CompileError> flushErrors() {

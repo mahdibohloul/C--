@@ -1,12 +1,10 @@
 package main.symbolTable.items;
 
-import main.ast.nodes.declaration.struct.*;
-import main.ast.types.*;
-import main.symbolTable.*;
-
-import java.util.*;
+import main.ast.nodes.declaration.struct.StructDeclaration;
+import main.symbolTable.SymbolTable;
 
 public class StructSymbolTableItem extends SymbolTableItem {
+    private static int structCounter = 1;
     public static final String START_KEY = "Struct_";
     private SymbolTable StructSymbolTable;
     private StructDeclaration structDeclaration;
@@ -16,14 +14,29 @@ public class StructSymbolTableItem extends SymbolTableItem {
         this.name = structDeclaration.getStructName().getName();
     }
 
-    public SymbolTable getStructSymbolTable() { return StructSymbolTable; }
-    public void setStructSymbolTable(SymbolTable structSymbolTable) { StructSymbolTable = structSymbolTable; }
+    public SymbolTable getStructSymbolTable() {
+        return StructSymbolTable;
+    }
 
-    public StructDeclaration getStructDeclaration() { return structDeclaration; }
-    public void setStructDeclaration(StructDeclaration structDeclaration) { this.structDeclaration = structDeclaration; }
+    public void setStructSymbolTable(SymbolTable structSymbolTable) {
+        StructSymbolTable = structSymbolTable;
+    }
+
+    public StructDeclaration getStructDeclaration() {
+        return structDeclaration;
+    }
+
+    public void setStructDeclaration(StructDeclaration structDeclaration) {
+        this.structDeclaration = structDeclaration;
+    }
 
     @Override
     public String getKey() {
         return START_KEY + this.name;
+    }
+
+    public void generateNewName() {
+        this.setName(structCounter + "_" + this.getName());
+        structCounter++;
     }
 }
