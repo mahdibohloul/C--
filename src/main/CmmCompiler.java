@@ -4,6 +4,7 @@ import main.ast.nodes.Program;
 import main.grammar.CmmLexer;
 import main.grammar.CmmParser;
 import main.visitor.name.ASTTreePrinter;
+import main.visitor.name.NamingAnalysisVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -14,7 +15,11 @@ public class CmmCompiler {
         CmmParser cmmParser = new CmmParser(tokenStream);
 
         Program program = cmmParser.cmm().cmmProgram;
-        ASTTreePrinter astTreePrinter = new ASTTreePrinter();
-        program.accept(astTreePrinter);
+        NamingAnalysisVisitor namingVisitor = new NamingAnalysisVisitor();
+        program.accept(namingVisitor);
+        if(!NamingAnalysisVisitor.hasError()) {
+            ASTTreePrinter astTreePrinter = new ASTTreePrinter();
+            program.accept(astTreePrinter);
+        }
     }
 }

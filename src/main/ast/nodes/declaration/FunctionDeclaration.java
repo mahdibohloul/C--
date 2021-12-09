@@ -1,11 +1,12 @@
 package main.ast.nodes.declaration;
 
+import main.ast.nodes.declaration.struct.StructDeclaration;
 import main.ast.nodes.expression.Identifier;
 import main.ast.nodes.statement.Statement;
-import main.ast.types.*;
+import main.ast.types.Type;
 import main.visitor.IVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
 
 //line -> identifier
 public class FunctionDeclaration extends Declaration {
@@ -18,6 +19,7 @@ public class FunctionDeclaration extends Declaration {
     public Identifier getFunctionName() {
         return functionName;
     }
+
     public void setFunctionName(Identifier functionName) {
         this.functionName = functionName;
         this.setLine(functionName.getLine());
@@ -26,9 +28,11 @@ public class FunctionDeclaration extends Declaration {
     public ArrayList<VariableDeclaration> getArgs() {
         return args;
     }
+
     public void setArgs(ArrayList<VariableDeclaration> args) {
         this.args = args;
     }
+
     public void addArg(VariableDeclaration arg) {
         this.args.add(arg);
     }
@@ -36,6 +40,7 @@ public class FunctionDeclaration extends Declaration {
     public Statement getBody() {
         return body;
     }
+
     public void setBody(Statement body) {
         this.body = body;
     }
@@ -43,6 +48,7 @@ public class FunctionDeclaration extends Declaration {
     public Type getReturnType() {
         return returnType;
     }
+
     public void setReturnType(Type returnType) {
         this.returnType = returnType;
     }
@@ -51,9 +57,15 @@ public class FunctionDeclaration extends Declaration {
     public String toString() {
         return "FunctionDeclaration_" + this.functionName.getName();
     }
+
     @Override
     public <T> T accept(IVisitor<T> visitor) {
         return visitor.visit(this);
     }
 
+    public StructDeclaration getAsStructDeclaration() {
+        StructDeclaration structDeclaration = new StructDeclaration();
+        structDeclaration.setStructName(this.functionName);
+        return structDeclaration;
+    }
 }

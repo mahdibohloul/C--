@@ -6,12 +6,7 @@ import main.symbolTable.exceptions.ItemNotFoundException;
 import main.symbolTable.items.SymbolTableItem;
 import main.symbolTable.utils.Stack;
 
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 
 
 public class SymbolTable {
@@ -20,7 +15,7 @@ public class SymbolTable {
 
     public static SymbolTable top;
     public static SymbolTable root;
-    private static Stack<SymbolTable> stack = new Stack<>();
+    private static final Stack<SymbolTable> stack = new Stack<>();
 
     public static void push(SymbolTable symbolTable) {
         if (top != null)
@@ -35,7 +30,9 @@ public class SymbolTable {
     //End of static members
 
     public SymbolTable pre;
-    private Map<String, SymbolTableItem> items;
+    private final Map<String, SymbolTableItem> items;
+    private SymbolTableItem creatorItem = null;
+
 
     public SymbolTable() {
         this(null);
@@ -55,14 +52,21 @@ public class SymbolTable {
     public SymbolTableItem getItem(String key) throws ItemNotFoundException {
         Set<SymbolTable> visitedSymbolTables = new HashSet<>();
         SymbolTable currentSymbolTable = this;
-        while((currentSymbolTable != null) && (!visitedSymbolTables.contains(currentSymbolTable))) {
-            visitedSymbolTables.add( currentSymbolTable );
+        while ((currentSymbolTable != null) && (!visitedSymbolTables.contains(currentSymbolTable))) {
+            visitedSymbolTables.add(currentSymbolTable);
             SymbolTableItem symbolTableItem = currentSymbolTable.items.get(key);
-            if( symbolTableItem != null )
+            if (symbolTableItem != null)
                 return symbolTableItem;
             currentSymbolTable = currentSymbolTable.pre;
         }
         throw new ItemNotFoundException();
     }
 
+    public void setCreatorItem(SymbolTableItem creatorItem) {
+        this.creatorItem = creatorItem;
+    }
+
+    public SymbolTableItem getCreatorItem() {
+        return creatorItem;
+    }
 }

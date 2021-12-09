@@ -1,7 +1,8 @@
 package main.symbolTable.items;
 
 
-import main.ast.nodes.declaration.*;
+import main.ast.nodes.declaration.FunctionDeclaration;
+import main.ast.nodes.declaration.VariableDeclaration;
 import main.ast.types.Type;
 import main.symbolTable.SymbolTable;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 
 public class FunctionSymbolTableItem extends SymbolTableItem {
     public static final String START_KEY = "Function_";
+    private static int functionCounter = 1;
     private main.ast.nodes.declaration.FunctionDeclaration FunctionDeclaration;
     private Type returnType;
     private ArrayList<Type> argTypes = new ArrayList<>();
@@ -17,7 +19,7 @@ public class FunctionSymbolTableItem extends SymbolTableItem {
     public FunctionSymbolTableItem(FunctionDeclaration FunctionDeclaration) {
         this.FunctionDeclaration = FunctionDeclaration;
         this.returnType = FunctionDeclaration.getReturnType();
-        for(VariableDeclaration varDeclaration : FunctionDeclaration.getArgs()) {
+        for (VariableDeclaration varDeclaration : FunctionDeclaration.getArgs()) {
             this.argTypes.add(varDeclaration.getVarType());
         }
         this.name = FunctionDeclaration.getFunctionName().getName();
@@ -60,4 +62,12 @@ public class FunctionSymbolTableItem extends SymbolTableItem {
         return START_KEY + this.name;
     }
 
+    public StructSymbolTableItem getAsStructSymbolTableItem() {
+        return new StructSymbolTableItem(this.getFunctionDeclaration().getAsStructDeclaration());
+    }
+
+    public void generateNewName() {
+        this.setName(functionCounter + "_" + this.getName());
+        functionCounter++;
+    }
 }

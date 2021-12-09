@@ -14,10 +14,21 @@ public class VariableSymbolTableItem extends SymbolTableItem {
     public Type getType() {
         return type;
     }
-    public void setType(Type type) { this.type = type;}
+
+    public void setType(Type type) {
+        this.type = type;
+    }
 
     @Override
     public String getKey() {
         return START_KEY + this.name;
+    }
+
+    public String getAsStructKey() {
+        return StructSymbolTableItem.START_KEY + this.name;
+    }
+
+    public String getAsFunctionKey() {
+        return FunctionSymbolTableItem.START_KEY + this.name;
     }
 }
