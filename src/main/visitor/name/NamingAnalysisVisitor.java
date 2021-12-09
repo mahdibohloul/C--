@@ -83,14 +83,12 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
         try {
             pre.getItem(variableSymbolTableItem.getAsStructKey());
             variableDeclaration.addError(new VarStructConflict(variableDeclaration.getLine(), variableSymbolTableItem.getName()));
-            canInsert = false;
         } catch (ItemNotFoundException ex) {
             //do nothing
         }
         try {
             pre.getItem(variableSymbolTableItem.getAsFunctionKey());
             variableDeclaration.addError(new VarFunctionConflict(variableDeclaration.getLine(), variableSymbolTableItem.getName()));
-            canInsert = false;
         } catch (ItemNotFoundException e) {
             //do nothing
         }
@@ -115,15 +113,17 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
 
     @Override
     public Void visit(SetGetVarDeclaration setGetVarDeclaration) {
-        VariableDeclaration variableDeclaration = new VariableDeclaration(setGetVarDeclaration.getVarName(), setGetVarDeclaration.getVarType());
-        variableDeclaration.accept(this);
-        setGetVarDeclaration.addErrors(variableDeclaration.flushErrors());
-        setGetVarDeclaration.getArgs().forEach(arg -> {
-            arg.accept(this);
-            setGetVarDeclaration.addErrors(arg.flushErrors());
-        });
-        setGetVarDeclaration.getSetterBody().accept(this);
-        setGetVarDeclaration.addErrors(setGetVarDeclaration.getSetterBody().flushErrors());
+        if (!checkArgs) {
+            VariableDeclaration variableDeclaration = new VariableDeclaration(setGetVarDeclaration.getVarName(),
+                    setGetVarDeclaration.getVarType());
+            variableDeclaration.accept(this);
+            setGetVarDeclaration.addErrors(variableDeclaration.flushErrors());
+        } else {
+            setGetVarDeclaration.getArgs().forEach(arg -> {
+                arg.accept(this);
+                setGetVarDeclaration.addErrors(arg.flushErrors());
+            });
+        }
         return null;
     }
 
@@ -138,7 +138,18 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
 
     @Override
     public Void visit(BlockStmt blockStmt) {
+        ArrayList<Statement> remainingStmts = new ArrayList<>();
         blockStmt.getStatements().forEach(statement -> {
+            if (statement.getClass() == SetGetVarDeclaration.class) {
+                checkArgs = false;
+                remainingStmts.add(statement);
+            }
+            statement.accept(this);
+            blockStmt.addErrors(statement.flushErrors());
+
+        });
+        checkArgs = true;
+        remainingStmts.forEach(statement -> {
             statement.accept(this);
             blockStmt.addErrors(statement.flushErrors());
         });
@@ -301,6 +312,7 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
     }
 
     private static ArrayList<CompileError> errors = new ArrayList<>();
+    private static boolean checkArgs = false;
 
     public static void setErrors(ArrayList<CompileError> _errors) {
         errors = _errors;
