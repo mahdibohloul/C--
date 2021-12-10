@@ -1,0 +1,6 @@
+Line 7: Duplicate struct aaa
+Line 10: Duplicate struct aa
+Line 14: Name of function aa conflicts with a struct's name
+Line 16: Name of function aa conflicts with a struct's name
+Line 16: Duplicate function aa
+Line 19: Name of function aaa conflicts with a struct's name

@@ -105,7 +105,13 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
         SymbolTable currentScope = new SymbolTable(SymbolTable.top);
         currentScope.setCreatorItem(new StructSymbolTableItem(structDeclaration));
         SymbolTable.push(currentScope);
-        structDeclaration.getBody().accept(this);
+        if (structDeclaration.getBody().getClass() == SetGetVarDeclaration.class) {
+            checkArgs = false;
+            structDeclaration.getBody().accept(this);
+            checkArgs = true;
+            structDeclaration.getBody().accept(this);
+        } else
+            structDeclaration.getBody().accept(this);
         structDeclaration.addErrors(structDeclaration.getBody().flushErrors());
         SymbolTable.pop();
         return null;
@@ -164,10 +170,12 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
         conditionalStmt.getThenBody().accept(this);
         conditionalStmt.addErrors(conditionalStmt.getThenBody().flushErrors());
         SymbolTable.pop();
-        SymbolTable.push(new SymbolTable(SymbolTable.top));
-        conditionalStmt.getElseBody().accept(this);
-        conditionalStmt.addErrors(conditionalStmt.getElseBody().flushErrors());
-        SymbolTable.pop();
+        if (conditionalStmt.getElseBody() != null) {
+            SymbolTable.push(new SymbolTable(SymbolTable.top));
+            conditionalStmt.getElseBody().accept(this);
+            conditionalStmt.addErrors(conditionalStmt.getElseBody().flushErrors());
+            SymbolTable.pop();
+        }
         return null;
     }
 
@@ -187,8 +195,10 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
 
     @Override
     public Void visit(ReturnStmt returnStmt) {
-        returnStmt.getReturnedExpr().accept(this);
-        returnStmt.addErrors(returnStmt.getReturnedExpr().flushErrors());
+        if (returnStmt.getReturnedExpr() != null) {
+            returnStmt.getReturnedExpr().accept(this);
+            returnStmt.addErrors(returnStmt.getReturnedExpr().flushErrors());
+        }
         return null;
     }
 
@@ -355,6 +365,12 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
         functionSymbolTableItem.setFunctionSymbolTable(new SymbolTable(root));
         boolean newNameNeeded = false;
         try {
+            functionSymbolTableItem.getFunctionSymbolTable().pre.getItem(functionSymbolTableItem.getAsStructSymbolTableItem().getKey());
+            functionDeclaration.addError(new FunctionStructConflict(functionDeclaration.getLine(), functionSymbolTableItem.getName()));
+        } catch (ItemNotFoundException e) {
+            //do nothing
+        }
+        try {
             root.put(functionSymbolTableItem);
         } catch (ItemAlreadyExistsException e) {
             functionDeclaration.addError(new DuplicateFunction(functionDeclaration.getLine(), functionSymbolTableItem.getName()));
@@ -368,12 +384,6 @@ public class NamingAnalysisVisitor extends Visitor<Void> {
             } catch (ItemAlreadyExistsException e) {
                 //do nothing
             }
-        }
-        try {
-            functionSymbolTableItem.getFunctionSymbolTable().pre.getItem(functionSymbolTableItem.getAsStructSymbolTableItem().getKey());
-            functionDeclaration.addError(new FunctionStructConflict(functionDeclaration.getLine(), functionSymbolTableItem.getName()));
-        } catch (ItemNotFoundException e) {
-            //do nothing
         }
     }
 

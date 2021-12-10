@@ -1,0 +1,23 @@
+struct aaa
+    int aab
+
+struct aa
+    int ab
+
+struct aaa
+    struct aa ab
+
+struct aa
+    bool ab
+
+
+void aa()
+    return ab
+void aa()
+    return ab
+
+void aaa()
+    return aaa
+
+main()
+    display(aa)
