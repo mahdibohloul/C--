@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 public class FunctionSymbolTableItem extends SymbolTableItem {
     public static final String START_KEY = "Function_";
-    private static int functionCounter = 1;
     private main.ast.nodes.declaration.FunctionDeclaration FunctionDeclaration;
     private Type returnType;
     private ArrayList<Type> argTypes = new ArrayList<>();
@@ -62,12 +61,4 @@ public class FunctionSymbolTableItem extends SymbolTableItem {
         return START_KEY + this.name;
     }
 
-    public StructSymbolTableItem getAsStructSymbolTableItem() {
-        return new StructSymbolTableItem(this.getFunctionDeclaration().getAsStructDeclaration());
-    }
-
-    public void generateNewName() {
-        this.setName(functionCounter + "_" + this.getName());
-        functionCounter++;
-    }
 }

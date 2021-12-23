@@ -18,6 +18,7 @@ public class BinaryExpression extends Expression {
     public Expression getFirstOperand() {
         return firstOperand;
     }
+
     public void setFirstOperand(Expression firstOperand) {
         this.firstOperand = firstOperand;
     }
@@ -25,6 +26,7 @@ public class BinaryExpression extends Expression {
     public Expression getSecondOperand() {
         return secondOperand;
     }
+
     public void setSecondOperand(Expression secondOperand) {
         this.secondOperand = secondOperand;
     }
@@ -32,6 +34,7 @@ public class BinaryExpression extends Expression {
     public BinaryOperator getBinaryOperator() {
         return binaryOperator;
     }
+
     public void setBinaryOperator(BinaryOperator binaryOperator) {
         this.binaryOperator = binaryOperator;
     }
@@ -40,6 +43,7 @@ public class BinaryExpression extends Expression {
     public String toString() {
         return "BinaryExpression_" + this.binaryOperator.name();
     }
+
     @Override
     public <T> T accept(IVisitor<T> visitor) {
         return visitor.visit(this);

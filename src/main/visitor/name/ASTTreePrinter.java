@@ -31,8 +31,8 @@ public class ASTTreePrinter extends Visitor<Void> {
     public Void visit(FunctionDeclaration functionDec) {
         messagePrinter(functionDec.getLine(), functionDec.toString());
         functionDec.getFunctionName().accept(this);
-        for (VariableDeclaration variableDeclaration : functionDec.getArgs())
-            variableDeclaration.accept(this);
+        for (VariableDeclaration arg : functionDec.getArgs())
+            arg.accept(this);
         functionDec.getBody().accept(this);
         return null;
     }
@@ -65,8 +65,8 @@ public class ASTTreePrinter extends Visitor<Void> {
     public Void visit(SetGetVarDeclaration setGetVarDec) {
         messagePrinter(setGetVarDec.getLine(), setGetVarDec.toString());
         setGetVarDec.getVarName().accept(this);
-        for (VariableDeclaration variableDeclaration : setGetVarDec.getArgs())
-            variableDeclaration.accept(this);
+        for (VariableDeclaration varDec : setGetVarDec.getArgs())
+            varDec.accept(this);
         setGetVarDec.getSetterBody().accept(this);
         setGetVarDec.getGetterBody().accept(this);
         return null;
@@ -83,8 +83,8 @@ public class ASTTreePrinter extends Visitor<Void> {
     @Override
     public Void visit(BlockStmt blockStmt) {
         messagePrinter(blockStmt.getLine(), blockStmt.toString());
-        for (Statement statement : blockStmt.getStatements())
-            statement.accept(this);
+        for (Statement stmt : blockStmt.getStatements())
+            stmt.accept(this);
         return null;
     }
 
@@ -131,8 +131,8 @@ public class ASTTreePrinter extends Visitor<Void> {
     @Override
     public Void visit(VarDecStmt varDecStmt) {
         messagePrinter(varDecStmt.getLine(), varDecStmt.toString());
-        for (VariableDeclaration variableDeclaration : varDecStmt.getVars())
-            variableDeclaration.accept(this);
+        for (VariableDeclaration varDec : varDecStmt.getVars())
+            varDec.accept(this);
         return null;
     }
 
@@ -169,8 +169,8 @@ public class ASTTreePrinter extends Visitor<Void> {
     public Void visit(FunctionCall funcCall) {
         messagePrinter(funcCall.getLine(), funcCall.toString());
         funcCall.getInstance().accept(this);
-        for (Expression expression : funcCall.getArgs())
-            expression.accept(this);
+        for (Expression arg : funcCall.getArgs())
+            arg.accept(this);
         return null;
     }
 

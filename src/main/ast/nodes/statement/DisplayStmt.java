@@ -4,7 +4,7 @@ import main.ast.nodes.expression.Expression;
 import main.visitor.IVisitor;
 
 //Line -> DISPLAY
-public class DisplayStmt extends Statement{
+public class DisplayStmt extends Statement {
     private Expression arg;
 
     public DisplayStmt(Expression arg) {

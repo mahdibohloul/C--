@@ -28,10 +28,6 @@ public abstract class Node {
         }
     }
 
-    public void addErrors(ArrayList<CompileError> errors) {
-        this.errors.addAll(errors);
-    }
-
     public ArrayList<CompileError> flushErrors() {
         ArrayList<CompileError> errors = this.errors;
         this.errors = new ArrayList<>();

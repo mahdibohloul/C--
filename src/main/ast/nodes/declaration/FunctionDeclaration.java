@@ -1,6 +1,5 @@
 package main.ast.nodes.declaration;
 
-import main.ast.nodes.declaration.struct.StructDeclaration;
 import main.ast.nodes.expression.Identifier;
 import main.ast.nodes.statement.Statement;
 import main.ast.types.Type;
@@ -22,7 +21,6 @@ public class FunctionDeclaration extends Declaration {
 
     public void setFunctionName(Identifier functionName) {
         this.functionName = functionName;
-        this.setLine(functionName.getLine());
     }
 
     public ArrayList<VariableDeclaration> getArgs() {
@@ -63,9 +61,4 @@ public class FunctionDeclaration extends Declaration {
         return visitor.visit(this);
     }
 
-    public StructDeclaration getAsStructDeclaration() {
-        StructDeclaration structDeclaration = new StructDeclaration();
-        structDeclaration.setStructName(this.functionName);
-        return structDeclaration;
-    }
 }

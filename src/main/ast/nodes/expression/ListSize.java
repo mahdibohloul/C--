@@ -10,7 +10,10 @@ public class ListSize extends Expression {
         this.arg = arg;
     }
 
-    public void setArg(Expression arg) { this.arg = arg; }
+    public void setArg(Expression arg) {
+        this.arg = arg;
+    }
+
     public Expression getArg() {
         return arg;
     }

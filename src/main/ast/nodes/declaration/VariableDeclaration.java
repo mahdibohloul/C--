@@ -1,12 +1,12 @@
 package main.ast.nodes.declaration;
 
-import main.ast.nodes.expression.*;
-import main.ast.nodes.expression.values.*;
-import main.ast.types.*;
-import main.visitor.*;
+import main.ast.nodes.expression.Expression;
+import main.ast.nodes.expression.Identifier;
+import main.ast.types.Type;
+import main.visitor.IVisitor;
 
 //line -> IDENTIFIER
-public class VariableDeclaration extends Declaration{
+public class VariableDeclaration extends Declaration {
     private Identifier varName;
     private Type varType;
     private Expression defaultValue;
@@ -14,20 +14,20 @@ public class VariableDeclaration extends Declaration{
     public VariableDeclaration(Identifier varName, Type varType) {
         this.varName = varName;
         this.varType = varType;
-        this.setLine(varName.getLine());
     }
 
     public Identifier getVarName() {
         return varName;
     }
+
     public void setVarName(Identifier varName) {
         this.varName = varName;
-        this.setLine(varName.getLine());
     }
 
     public Type getVarType() {
         return varType;
     }
+
     public void setVarType(Type varType) {
         this.varType = varType;
     }
@@ -35,6 +35,7 @@ public class VariableDeclaration extends Declaration{
     public Expression getDefaultValue() {
         return defaultValue;
     }
+
     public void setDefaultValue(Expression defaultValue) {
         this.defaultValue = defaultValue;
     }
@@ -43,6 +44,7 @@ public class VariableDeclaration extends Declaration{
     public String toString() {
         return "VarDeclaration_" + this.varName.getName();
     }
+
     @Override
     public <T> T accept(IVisitor<T> visitor) {
         return visitor.visit(this);

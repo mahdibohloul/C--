@@ -4,12 +4,11 @@ import main.ast.nodes.expression.FunctionCall;
 import main.visitor.IVisitor;
 
 //line -> LPAR before arguments
-public class FunctionCallStmt extends Statement{
+public class FunctionCallStmt extends Statement {
     private FunctionCall funcCall;
 
     public FunctionCallStmt(FunctionCall funcCall) {
         this.funcCall = funcCall;
-        this.setLine(funcCall.getLine());
     }
 
     public FunctionCall getFunctionCall() {
