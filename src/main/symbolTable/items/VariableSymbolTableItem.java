@@ -23,12 +23,4 @@ public class VariableSymbolTableItem extends SymbolTableItem {
     public String getKey() {
         return START_KEY + this.name;
     }
-
-    public String getAsStructKey() {
-        return StructSymbolTableItem.START_KEY + this.name;
-    }
-
-    public String getAsFunctionKey() {
-        return FunctionSymbolTableItem.START_KEY + this.name;
-    }
 }

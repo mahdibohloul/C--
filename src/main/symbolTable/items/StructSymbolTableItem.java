@@ -4,7 +4,6 @@ import main.ast.nodes.declaration.struct.StructDeclaration;
 import main.symbolTable.SymbolTable;
 
 public class StructSymbolTableItem extends SymbolTableItem {
-    private static int structCounter = 1;
     public static final String START_KEY = "Struct_";
     private SymbolTable StructSymbolTable;
     private StructDeclaration structDeclaration;
@@ -33,10 +32,5 @@ public class StructSymbolTableItem extends SymbolTableItem {
     @Override
     public String getKey() {
         return START_KEY + this.name;
-    }
-
-    public void generateNewName() {
-        this.setName(structCounter + "_" + this.getName());
-        structCounter++;
     }
 }

@@ -4,8 +4,6 @@ import main.ast.nodes.declaration.*;
 import main.visitor.IVisitor;
 import java.util.ArrayList;
 
-
-//line -> line of VariableDeclaration
 public class VarDecStmt extends Statement{
     private ArrayList<VariableDeclaration> vars = new ArrayList<>();
 

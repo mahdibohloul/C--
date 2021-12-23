@@ -2,7 +2,6 @@ package main.ast.nodes.expression;
 
 import main.visitor.IVisitor;
 
-//line -> DOT
 public class StructAccess extends Expression {
     private Expression instance;
     private Identifier element;

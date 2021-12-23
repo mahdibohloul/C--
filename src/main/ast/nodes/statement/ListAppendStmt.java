@@ -4,20 +4,20 @@ import main.ast.nodes.expression.Expression;
 import main.ast.nodes.expression.ListAppend;
 import main.visitor.IVisitor;
 
-//line -> line of ListAppend
-public class ListAppendStmt extends Statement{
+public class ListAppendStmt extends Statement {
     private ListAppend listAppendExpr;
 
     public ListAppendStmt(ListAppend listAppendExpr) {
         this.listAppendExpr = listAppendExpr;
-        this.setLine(listAppendExpr.getLine());
     }
 
     public void setListAppendExpr(ListAppend listAppendExpr) {
         this.listAppendExpr = listAppendExpr;
-        this.setLine(listAppendExpr.getLine());
     }
-    public Expression getListAppendExpr() { return listAppendExpr; }
+
+    public Expression getListAppendExpr() {
+        return listAppendExpr;
+    }
 
     @Override
     public String toString() {

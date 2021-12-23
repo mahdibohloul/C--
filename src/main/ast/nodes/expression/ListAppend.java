@@ -2,8 +2,7 @@ package main.ast.nodes.expression;
 
 import main.visitor.IVisitor;
 
-//line -> APPEND
-public class ListAppend extends Expression{
+public class ListAppend extends Expression {
     private Expression listArg;
     private Expression elementArg;
 
@@ -12,10 +11,18 @@ public class ListAppend extends Expression{
         this.elementArg = elementArg;
     }
 
-    public void setListArg(Expression listArg) { this.listArg = listArg; }
-    public Expression getListArg() { return listArg; }
+    public void setListArg(Expression listArg) {
+        this.listArg = listArg;
+    }
 
-    public void setElementArg(Expression elementArg) { this.elementArg = elementArg; }
+    public Expression getListArg() {
+        return listArg;
+    }
+
+    public void setElementArg(Expression elementArg) {
+        this.elementArg = elementArg;
+    }
+
     public Expression getElementArg() {
         return elementArg;
     }

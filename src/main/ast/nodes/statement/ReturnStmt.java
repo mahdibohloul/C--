@@ -4,7 +4,7 @@ import main.ast.nodes.expression.Expression;
 import main.visitor.IVisitor;
 
 //line -> RETURN
-public class ReturnStmt extends Statement{
+public class ReturnStmt extends Statement {
     private Expression returnedExpr;
 
     public ReturnStmt() {
@@ -25,6 +25,6 @@ public class ReturnStmt extends Statement{
 
     @Override
     public <T> T accept(IVisitor<T> visitor) {
-            return visitor.visit(this);
+        return visitor.visit(this);
     }
 }

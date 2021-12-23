@@ -9,10 +9,7 @@ public class StructType extends Type {
         this.structName = structName;
     }
 
-    public Identifier getStructName() {
-        return structName;
-    }
-
+    public Identifier getStructName() { return structName; }
     public void setStructName(Identifier structName) {
         this.structName = structName;
     }

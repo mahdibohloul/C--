@@ -16,9 +16,11 @@ public class Program extends Node {
     public ArrayList<FunctionDeclaration> getFunctions() {
         return functions;
     }
+
     public void setFunctions(ArrayList<FunctionDeclaration> functions) {
         this.functions = functions;
     }
+
     public void addFunction(FunctionDeclaration function) {
         functions.add(function);
     }
@@ -26,9 +28,11 @@ public class Program extends Node {
     public ArrayList<StructDeclaration> getStructs() {
         return structs;
     }
+
     public void setStructs(ArrayList<StructDeclaration> structs) {
         this.structs = structs;
     }
+
     public void addStruct(StructDeclaration struct) {
         structs.add(struct);
     }
@@ -36,6 +40,7 @@ public class Program extends Node {
     public MainDeclaration getMain() {
         return main;
     }
+
     public void setMain(MainDeclaration main) {
         this.main = main;
     }

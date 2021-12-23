@@ -11,6 +11,7 @@ public class LoopStmt extends Statement {
     public Expression getCondition() {
         return condition;
     }
+
     public void setCondition(Expression condition) {
         this.condition = condition;
     }
@@ -18,6 +19,7 @@ public class LoopStmt extends Statement {
     public Statement getBody() {
         return body;
     }
+
     public void setBody(Statement body) {
         this.body = body;
     }

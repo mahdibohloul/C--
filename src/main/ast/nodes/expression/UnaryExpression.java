@@ -4,7 +4,7 @@ import main.ast.nodes.expression.operators.UnaryOperator;
 import main.visitor.IVisitor;
 
 //line -> The line of operator
-public class UnaryExpression extends Expression{
+public class UnaryExpression extends Expression {
     private Expression operand;
     private UnaryOperator operator;
 
