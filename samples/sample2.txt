@@ -1,0 +1,42 @@
+struct s begin
+    struct c ca
+    int a(int b) begin
+    set begin
+        int f
+        a = b
+        return a
+        end
+    get
+        return 1
+    end
+end
+
+void g() begin
+    return
+end
+
+void f(int xx) begin
+    display(a)
+    return g()
+end
+
+
+main() begin
+    f(5)
+    struct s ss;
+    list # int b
+    list # int a
+    int fff = 0
+    ss.a = (f())
+    fptr <int -> bool> fp = f
+    fptr <int -> void> fp1 = f
+    fp1(5) = 5 + 7
+    append(a, 1)
+    append(a, 2)
+    append(b, fp1(true))
+    append(ss, 1)
+    5 = a[0]
+    f(g())
+    if(f())
+        int xxx = append(b, 2) + true
+end
