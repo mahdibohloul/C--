@@ -26,8 +26,12 @@ void f2()
 
 
 main() begin
+    a = a + 3
     struct A a;
+    list # struct C cs;
     a.i = 3
     display(f2(1))
+    display(f[true])
     function(i, 2)
+    int ccc = function(1, true)
 end

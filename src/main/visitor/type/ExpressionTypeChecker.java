@@ -234,17 +234,18 @@ public class ExpressionTypeChecker extends Visitor<Type> {
     public Type visit(ListAccessByIndex listAccessByIndex) {
         Type instanceType = listAccessByIndex.getInstance().accept(this);
         Type indexType = listAccessByIndex.getIndex().accept(this);
+        if (!(indexType instanceof IntType)) {
+            listAccessByIndex.addError(new ListIndexNotInt(listAccessByIndex.getLine()));
+        }
+        if (!(instanceType instanceof ListType) && !(instanceType instanceof NoType)) {
+            listAccessByIndex.addError(new AccessByIndexOnNonList(listAccessByIndex.getLine()));
+            return new NoType();
+        }
         if (instanceType instanceof NoType)
             return new NoType();
-        if (instanceType instanceof ListType) {
-            if (indexType instanceof IntType) {
-                return ((ListType) instanceType).getType();
-            } else {
-                listAccessByIndex.addError(new ListIndexNotInt(listAccessByIndex.getLine()));
-                return new NoType();
-            }
+        if (indexType instanceof IntType) {
+            return ((ListType) instanceType).getType();
         }
-        listAccessByIndex.addError(new AccessByIndexOnNonList(listAccessByIndex.getLine()));
         return new NoType();
     }
 

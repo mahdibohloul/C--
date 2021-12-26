@@ -95,6 +95,9 @@ public class TypeChecker extends Visitor<Void> {
                         FunctionSymbolTableItem.START_KEY + functionDec.getFunctionName().getName());
         SymbolTable.push(functionSymbolTableItem.getFunctionSymbolTable());
         SymbolTable.push(new SymbolTable(SymbolTable.root));
+        for (VariableDeclaration variableDeclaration : functionDec.getArgs())
+            variableDeclaration.accept(this);
+        functionDec.getBody().accept(this);
         if (functionDec.getReturnType() instanceof StructType) {
             try {
                 functionSymbolTableItem.getFunctionSymbolTable()
@@ -103,11 +106,9 @@ public class TypeChecker extends Visitor<Void> {
             } catch (ItemNotFoundException e) {
                 functionDec.addError(new StructNotDeclared(functionDec.getLine(),
                         ((StructType) functionDec.getReturnType()).getStructName().getName()));
+                functionDec.setReturnType(new NoType());
             }
         }
-        for (VariableDeclaration variableDeclaration : functionDec.getArgs())
-            variableDeclaration.accept(this);
-        functionDec.getBody().accept(this);
         SymbolTable.pop();
         return null;
     }
@@ -134,7 +135,15 @@ public class TypeChecker extends Visitor<Void> {
                         ((StructType) varType).getStructName().getName()));
                 varType = new NoType();
             }
-
+        } else if (varType instanceof ListType && ((ListType) varType).getType() instanceof StructType) {
+            SymbolTableItem symbolTableItem = getCorrespondSymbolTableItem(SymbolTable.top,
+                    StructSymbolTableItem.START_KEY +
+                            ((StructType) ((ListType) varType).getType()).getStructName().getName());
+            if (symbolTableItem == null) {
+                variableDec.addError(new StructNotDeclared(variableDec.getLine(),
+                        ((StructType) ((ListType) varType).getType()).getStructName().getName()));
+                varType = new NoType();
+            }
         }
         VariableSymbolTableItem variableSymbolTableItem = new VariableSymbolTableItem(variableDec.getVarName());
         variableSymbolTableItem.setType(varType);
