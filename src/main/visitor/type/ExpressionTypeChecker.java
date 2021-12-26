@@ -7,6 +7,7 @@ import main.ast.nodes.expression.values.Value;
 import main.ast.nodes.expression.values.primitive.BoolValue;
 import main.ast.nodes.expression.values.primitive.IntValue;
 import main.ast.nodes.statement.FunctionCallStmt;
+import main.ast.nodes.statement.ListAppendStmt;
 import main.ast.nodes.statement.Statement;
 import main.ast.types.*;
 import main.ast.types.primitives.BoolType;
@@ -52,7 +53,9 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                 .map(expr -> {
                             if (expr instanceof FunctionCall)
                                 functionCallInPar = true;
-                            return expr.accept(this);
+                            Type exprType = expr.accept(this);
+                            functionCallInPar = false;
+                            return exprType;
                         }
                 ).collect(Collectors.toList()));
     }
@@ -78,11 +81,13 @@ public class ExpressionTypeChecker extends Visitor<Type> {
     }
 
     private boolean isValidLValue(Type lValueType, Expression lValue) {
-        if (lValueType instanceof NoType) return true;
         if (lValueType instanceof VoidType) {
             return false;
         }
-        if ((lValueType instanceof IntType || lValueType instanceof BoolType) && lValue instanceof Value) {
+        if ((lValueType instanceof IntType || lValueType instanceof NoType ||
+                lValueType instanceof BoolType) && (lValue instanceof Value ||
+                lValue instanceof BinaryExpression ||
+                lValue instanceof UnaryExpression)) {
             return false;
         }
         return true;
@@ -96,6 +101,8 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                 op1 = binaryExpression.getFirstOperand().accept(this);
                 op2 = binaryExpression.getSecondOperand().accept(this);
                 if (op1 instanceof NoType || op2 instanceof NoType) return new NoType();
+                if (op1 instanceof ListType || op2 instanceof ListType || op1 instanceof VoidType || op2 instanceof VoidType)
+                    break;
                 if (op1.getClass() == op2.getClass()) return new BoolType();
             }
             case and, or -> {
@@ -107,27 +114,42 @@ public class ExpressionTypeChecker extends Visitor<Type> {
             }
             case assign -> {
                 op1 = binaryExpression.getFirstOperand().accept(this);
-                if (op1 instanceof FptrType && binaryExpression.getSecondOperand() instanceof Identifier) {
+                if (op1 instanceof FptrType fptrType && binaryExpression.getSecondOperand() instanceof Identifier) {
                     FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) getCorrespondSymbolTableItem(
                             SymbolTable.root,
                             FunctionSymbolTableItem.START_KEY +
                                     ((Identifier) binaryExpression.getSecondOperand()).getName());
                     if (functionSymbolTableItem != null) {
-                        if (((FptrType) op1).getReturnType().getClass() !=
-                                functionSymbolTableItem.getFunctionDeclaration().getReturnType().getClass())
+                        FptrType functionAsFptrType = TypeChecker.createFptrTypeFromFunctionDec(functionSymbolTableItem.getFunctionDeclaration());
+                        if (!TypeChecker.areFptrTypesEqual(fptrType, functionAsFptrType)) {
                             break;
-                        if (funcArgsAreWrong(((FptrType) op1).getArgsType(),
-                                functionSymbolTableItem.getFunctionDeclaration().getArgs()
-                                        .stream().map(VariableDeclaration::getVarType).collect(Collectors.toList())))
-                            break;
+                        }
                         return op1;
-                    } else
-                        break;
+                    } else {
+                        op2 = binaryExpression.getSecondOperand().accept(this);
+                        if (!(op2 instanceof FptrType) && !(op2 instanceof NoType)) break;
+                        if (op2 instanceof FptrType) {
+                            if (!TypeChecker.areFptrTypesEqual(fptrType, (FptrType) op2)) {
+                                break;
+                            } else
+                                return op1;
+                        } else {
+                            return new NoType();
+                        }
+                    }
                 }
                 op2 = binaryExpression.getSecondOperand().accept(this);
                 if (!isValidLValue(op1, binaryExpression.getFirstOperand())) {
                     binaryExpression.addError(new LeftSideNotLvalue(binaryExpression.getLine()));
                     return new NoType();
+                } else if (op1 instanceof FptrType && op2 instanceof FptrType) {
+                    if (!TypeChecker.areFptrTypesEqual((FptrType) op1, (FptrType) op2))
+                        break;
+                    return op1;
+                } else if (op1 instanceof ListType && op2 instanceof ListType) {
+                    if (!TypeChecker.areListTypesEqual((ListType) op1, (ListType) op2))
+                        break;
+                    return op1;
                 } else if (op1.getClass() == op2.getClass())
                     return op1;
                 else if (op2 instanceof NoType || op1 instanceof NoType)
@@ -174,36 +196,42 @@ public class ExpressionTypeChecker extends Visitor<Type> {
 
     @Override
     public Type visit(FunctionCall funcCall) {
-        Type instanceType;
+        Type instanceType = null;
+        Type resultType = null;
         if (funcCall.getInstance() instanceof Identifier) {
             FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem)
                     getCorrespondSymbolTableItem(SymbolTable.root,
                             FunctionSymbolTableItem.START_KEY + ((Identifier) funcCall.getInstance()).getName());
             if (functionSymbolTableItem != null) {
-                if (!canCallFunction(functionSymbolTableItem.getFunctionDeclaration().getReturnType()))
+                if (!canCallFunction(functionSymbolTableItem.getFunctionDeclaration().getReturnType())) {
                     funcCall.addError(new CantUseValueOfVoidFunction(funcCall.getLine()));
+                    resultType = new NoType();
+                }
                 if (funcArgsAreWrong(
                         functionSymbolTableItem.getFunctionDeclaration().getArgs()
                                 .stream().map(VariableDeclaration::getVarType).collect(Collectors.toList()),
                         funcCall.getArgs())) {
                     funcCall.addError(new ArgsInFunctionCallNotMatchDefinition(funcCall.getLine()));
-                    instanceType = new NoType();
+                    resultType = new NoType();
                 } else
-                    instanceType = functionSymbolTableItem.getFunctionDeclaration().getReturnType();
+                    resultType = (resultType != null) ? resultType :
+                            functionSymbolTableItem.getFunctionDeclaration().getReturnType();
             } else {
                 instanceType = funcCall.getInstance().accept(this);
                 if (!(instanceType instanceof FptrType) &&
                         !(instanceType instanceof NoType)) {
                     funcCall.addError(new CallOnNoneFptrType(funcCall.getLine()));
-                    instanceType = new NoType();
+                    resultType = new NoType();
                 } else if (instanceType instanceof FptrType) {
-                    if (!canCallFunction(((FptrType) instanceType).getReturnType()))
+                    if (!canCallFunction(((FptrType) instanceType).getReturnType())) {
                         funcCall.addError(new CantUseValueOfVoidFunction(funcCall.getLine()));
+                        resultType = new NoType();
+                    }
                     if (funcArgsAreWrong(((FptrType) instanceType).getArgsType().stream().toList(), funcCall.getArgs())) {
                         funcCall.addError(new ArgsInFunctionCallNotMatchDefinition(funcCall.getLine()));
-                        instanceType = new NoType();
+                        resultType = new NoType();
                     } else {
-                        instanceType = ((FptrType) instanceType).getReturnType();
+                        resultType = resultType != null ? resultType : ((FptrType) instanceType).getReturnType();
                     }
                 } else {
                     funcCall.getArgs().forEach(x -> {
@@ -213,9 +241,9 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                 }
             }
         } else
-            instanceType = funcCall.getInstance().accept(this);
+            resultType = funcCall.getInstance().accept(this);
 
-        return instanceType;
+        return resultType;
     }
 
     @Override
@@ -234,7 +262,7 @@ public class ExpressionTypeChecker extends Visitor<Type> {
     public Type visit(ListAccessByIndex listAccessByIndex) {
         Type instanceType = listAccessByIndex.getInstance().accept(this);
         Type indexType = listAccessByIndex.getIndex().accept(this);
-        if (!(indexType instanceof IntType)) {
+        if (!(indexType instanceof IntType) && !(indexType instanceof NoType)) {
             listAccessByIndex.addError(new ListIndexNotInt(listAccessByIndex.getLine()));
         }
         if (!(instanceType instanceof ListType) && !(instanceType instanceof NoType)) {
@@ -297,6 +325,8 @@ public class ExpressionTypeChecker extends Visitor<Type> {
     public Type visit(ListAppend listAppend) {
         Type listType = listAppend.getListArg().accept(this);
         Type elementType = listAppend.getElementArg().accept(this);
+        if (!(currentStatement instanceof ListAppendStmt))
+            listAppend.addError(new CantUseValueOfVoidFunction(listAppend.getLine()));
         if (listType instanceof NoType)
             return new NoType();
         if (!(listType instanceof ListType)) {

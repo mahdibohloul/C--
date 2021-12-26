@@ -24,9 +24,21 @@ end
 void f2()
     return 3
 
+void f4() begin
+    return 4
+    end
+
+fptr <void -> void> f3() begin
+    return f2
+end
 
 main() begin
-    a = a + 3
+    int p
+    int x
+    x = f4()[f4()]
+    fptr < void -> int> gggg;
+    gggg = f3()
+    p = x + 3 = true + 3;
     struct A a;
     list # struct C cs;
     a.i = 3

@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Cmm {
     public static void main(String[] args) throws IOException {
-        CharStream reader = CharStreams.fromFileName("samples/sample1.cmm");
+        CharStream reader = CharStreams.fromFileName("samples/sample3.cmm");
         CmmCompiler cmmCompiler = new CmmCompiler();
         cmmCompiler.compile(reader);
     }

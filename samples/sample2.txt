@@ -25,7 +25,8 @@ main() begin
     f(5)
     struct s ss;
     list # int b
-    list # int a
+    list # int a;
+    int p = x + 2 = true + 3
     int fff = 0
     ss.a = (f())
     fptr <int -> bool> fp = f

@@ -9,10 +9,7 @@ import main.ast.nodes.expression.BinaryExpression;
 import main.ast.nodes.expression.Identifier;
 import main.ast.nodes.expression.operators.BinaryOperator;
 import main.ast.nodes.statement.*;
-import main.ast.types.ListType;
-import main.ast.types.NoType;
-import main.ast.types.StructType;
-import main.ast.types.Type;
+import main.ast.types.*;
 import main.ast.types.primitives.BoolType;
 import main.ast.types.primitives.IntType;
 import main.compileError.typeError.*;
@@ -26,6 +23,7 @@ import main.symbolTable.items.VariableSymbolTableItem;
 import main.visitor.Visitor;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class TypeChecker extends Visitor<Void> {
     ExpressionTypeChecker expressionTypeChecker;
@@ -34,11 +32,39 @@ public class TypeChecker extends Visitor<Void> {
     private boolean firstVisit = true;
     private boolean canHaveReturn = true;
     private boolean inSetterGetter = false;
+    private boolean inSetterGetterAlreadyCatched = false;
 
     public TypeChecker() {
         this.expressionTypeChecker = new ExpressionTypeChecker();
         functionSymbolTableItems = new ArrayList<>();
         currentFunctionSymbolTableItem = null;
+    }
+
+    public static FptrType createFptrTypeFromFunctionDec(FunctionDeclaration functionDeclaration) {
+        ArrayList<Type> types = functionDeclaration.getArgs()
+                .stream().map(VariableDeclaration::getVarType)
+                .collect(Collectors.toCollection(ArrayList::new));
+        return new FptrType(types, functionDeclaration.getReturnType());
+    }
+
+    public static boolean areFptrTypesEqual(FptrType fptrType1, FptrType fptrType2) {
+        if (fptrType1.getReturnType().getClass() != fptrType2.getReturnType().getClass())
+            return false;
+        if (fptrType1.getArgsType().size() != fptrType2.getArgsType().size())
+            return false;
+        for (int i = 0; i < fptrType1.getArgsType().size(); i++) {
+            if (fptrType1.getArgsType().get(i).getClass() != fptrType2.getArgsType().get(i).getClass())
+                return false;
+        }
+        return true;
+    }
+
+    public static boolean areListTypesEqual(ListType listType1, ListType listType2) {
+        if (listType1.getType().getClass() != listType2.getType().getClass())
+            return false;
+        if (listType1.getType() instanceof ListType && listType2.getType() instanceof ListType)
+            return areListTypesEqual((ListType) listType1.getType(), (ListType) listType2.getType());
+        return true;
     }
 
     private SymbolTableItem getCorrespondSymbolTableItem(SymbolTable symbolTable, String key) {
@@ -123,8 +149,10 @@ public class TypeChecker extends Visitor<Void> {
 
     @Override
     public Void visit(VariableDeclaration variableDec) {
-        if (inSetterGetter)
+        if (inSetterGetter && !inSetterGetterAlreadyCatched) {
             variableDec.addError(new CannotUseDefineVar(variableDec.getLine()));
+            inSetterGetterAlreadyCatched = true;
+        }
         Type varType = variableDec.getVarType();
         if (varType instanceof StructType) {
             SymbolTableItem symbolTableItem = getCorrespondSymbolTableItem(SymbolTable.top,
@@ -281,17 +309,51 @@ public class TypeChecker extends Visitor<Void> {
 
     @Override
     public Void visit(ReturnStmt returnStmt) {
-        if (canHaveReturn) {
-            if (returnStmt.getReturnedExpr() != null) {
-                expressionTypeChecker.setCurrentStatement(returnStmt);
-                Type returnType = returnStmt.getReturnedExpr().accept(expressionTypeChecker);
-                if (!(returnType instanceof NoType))
-                    if (returnType.getClass() != currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType().getClass()) {
-                        returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
-                    }
-            }
-        } else
+        if (!canHaveReturn) {
             returnStmt.addError(new CannotUseReturn(returnStmt.getLine()));
+        }
+        if (returnStmt.getReturnedExpr() == null) {
+            return null;
+        }
+        expressionTypeChecker.setCurrentStatement(returnStmt);
+        if (currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType() instanceof FptrType &&
+                returnStmt.getReturnedExpr() instanceof Identifier) {
+            FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) getCorrespondSymbolTableItem(SymbolTable.root,
+                    FunctionSymbolTableItem.START_KEY + ((Identifier) returnStmt.getReturnedExpr()).getName());
+            if (functionSymbolTableItem != null) {
+                if (functionSymbolTableItem.getFunctionDeclaration().getReturnType() instanceof NoType) {
+                    return null;
+                }
+                FptrType functionAsFptrType = createFptrTypeFromFunctionDec(functionSymbolTableItem.getFunctionDeclaration());
+                if (!areFptrTypesEqual((FptrType) currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType(),
+                        functionAsFptrType)) {
+                    returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
+                    return null;
+                }
+            } else {
+                Type returnedType = returnStmt.getReturnedExpr().accept(expressionTypeChecker);
+                if (!(returnedType instanceof NoType) && !(returnedType instanceof FptrType)) {
+                    returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
+                    return null;
+                }
+                if (returnedType instanceof FptrType returnedFptrType) {
+                    if (!areFptrTypesEqual((FptrType) currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType(),
+                            returnedFptrType)) {
+                        returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
+                        return null;
+                    }
+                }
+                if (returnedType instanceof NoType) {
+                    return null;
+                }
+            }
+        } else {
+            Type returnType = returnStmt.getReturnedExpr().accept(expressionTypeChecker);
+            if (!(returnType instanceof NoType))
+                if (returnType.getClass() != currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType().getClass()) {
+                    returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
+                }
+        }
         return null;
     }
 
@@ -299,7 +361,7 @@ public class TypeChecker extends Visitor<Void> {
     public Void visit(LoopStmt loopStmt) {
         expressionTypeChecker.setCurrentStatement(loopStmt);
         Type conditionType = loopStmt.getCondition().accept(expressionTypeChecker);
-        if (!(conditionType instanceof BoolType)) {
+        if (!(conditionType instanceof BoolType) && !(conditionType instanceof NoType)) {
             loopStmt.addError(new ConditionNotBool(loopStmt.getLine()));
         }
         SymbolTable.push(new SymbolTable(SymbolTable.top));
@@ -314,6 +376,7 @@ public class TypeChecker extends Visitor<Void> {
         for (VariableDeclaration var : varDecStmt.getVars())
             if (firstVisit || inSetterGetter)
                 var.accept(this);
+        inSetterGetterAlreadyCatched = false;
         return null;
     }
 
