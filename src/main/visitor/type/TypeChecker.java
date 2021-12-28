@@ -336,9 +336,9 @@ public class TypeChecker extends Visitor<Void> {
                     returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
                     return null;
                 }
-                if (returnedType instanceof FptrType returnedFptrType) {
+                if (returnedType instanceof FptrType) {
                     if (!areFptrTypesEqual((FptrType) currentFunctionSymbolTableItem.getFunctionDeclaration().getReturnType(),
-                            returnedFptrType)) {
+                            (FptrType) returnedType)) {
                         returnStmt.addError(new ReturnValueNotMatchFunctionReturnType(returnStmt.getLine()));
                         return null;
                     }
