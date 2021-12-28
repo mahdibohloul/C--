@@ -1,0 +1,81 @@
+struct A begin
+    int num
+    list #int idx
+    bool find (int arg) begin
+        set begin
+            int x , y
+            int newArg = arg & var
+            find = arg
+            return find
+        end
+        get begin
+            int x , y
+            return arg
+        end
+    end
+end
+
+
+struct B function(int arg1, bool arg2) begin
+    if arg1 > arg2 == arg1
+        return arg1
+    else
+        return 2
+end
+
+void f2()
+    return
+
+void f() begin
+    int x
+end
+
+void g() begin
+    int x
+end
+
+int gg() begin
+    return 2
+end
+
+main() begin
+    int nb
+    struct B aa;
+    g().i = 2+true
+    gg().i = 2
+    list #int aaa
+    int hfg = aaa[1+true]
+    append(aaa, f())
+    nb = f()[g()]
+    ff(g())
+    int ww = f() + g()
+    f(g())
+    f(1+true)
+    struct A c;
+    display(f2(1))
+    int oo
+    int y
+    bool z = oo & y
+    f3(ii, jj)
+    c.i = 2
+    int x = f2(2)
+    int t = x()
+    x = 1 + f2(2)
+    x = true + f2(2)
+    x = 2 + 10 + true
+    struct A a;
+    int p = 2
+    p[true] = 2
+    list #bool list1
+    list #int list2
+    bool bo = (list1 == list2)
+    list1 = list2
+    a + p = 2
+    f2(2 = p)
+    p = x + 2 = true + 3
+    /*list #int h;
+    int c = 1 + append(h, 2)*/
+    a.i = 3
+    display(f2(1))
+    function(i, 2)
+end
