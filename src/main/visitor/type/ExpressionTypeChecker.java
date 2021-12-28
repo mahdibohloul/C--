@@ -63,7 +63,7 @@ public class ExpressionTypeChecker extends Visitor<Type> {
     private boolean funcArgsAreWrong(List<Type> args, List<Type> funcCallArgs) {
         if (args.size() != funcCallArgs.size()) return true;
         for (int i = 0; i < args.size(); i++) {
-            if (!args.get(i).getClass().equals(funcCallArgs.get(i).getClass()))
+            if (!args.get(i).getClass().equals(funcCallArgs.get(i).getClass()) && !(funcCallArgs.get(i) instanceof NoType))
                 return true;
         }
         return false;
@@ -114,14 +114,14 @@ public class ExpressionTypeChecker extends Visitor<Type> {
             }
             case assign -> {
                 op1 = binaryExpression.getFirstOperand().accept(this);
-                if (op1 instanceof FptrType fptrType && binaryExpression.getSecondOperand() instanceof Identifier) {
+                if (op1 instanceof FptrType && binaryExpression.getSecondOperand() instanceof Identifier) {
                     FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) getCorrespondSymbolTableItem(
                             SymbolTable.root,
                             FunctionSymbolTableItem.START_KEY +
                                     ((Identifier) binaryExpression.getSecondOperand()).getName());
                     if (functionSymbolTableItem != null) {
                         FptrType functionAsFptrType = TypeChecker.createFptrTypeFromFunctionDec(functionSymbolTableItem.getFunctionDeclaration());
-                        if (!TypeChecker.areFptrTypesEqual(fptrType, functionAsFptrType)) {
+                        if (!TypeChecker.areFptrTypesEqual((FptrType) op1, functionAsFptrType)) {
                             break;
                         }
                         return op1;
@@ -129,7 +129,7 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                         op2 = binaryExpression.getSecondOperand().accept(this);
                         if (!(op2 instanceof FptrType) && !(op2 instanceof NoType)) break;
                         if (op2 instanceof FptrType) {
-                            if (!TypeChecker.areFptrTypesEqual(fptrType, (FptrType) op2)) {
+                            if (!TypeChecker.areFptrTypesEqual((FptrType) op1, (FptrType) op2)) {
                                 break;
                             } else
                                 return op1;
@@ -227,7 +227,7 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                         funcCall.addError(new CantUseValueOfVoidFunction(funcCall.getLine()));
                         resultType = new NoType();
                     }
-                    if (funcArgsAreWrong(((FptrType) instanceType).getArgsType().stream().toList(), funcCall.getArgs())) {
+                    if (funcArgsAreWrong(((FptrType) instanceType).getArgsType(), funcCall.getArgs())) {
                         funcCall.addError(new ArgsInFunctionCallNotMatchDefinition(funcCall.getLine()));
                         resultType = new NoType();
                     } else {
@@ -238,6 +238,7 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                         if (x.accept(this) instanceof VoidType)
                             funcCall.addError(new CantUseValueOfVoidFunction(funcCall.getLine()));
                     });
+                    resultType = new NoType();
                 }
             }
         } else
@@ -253,8 +254,13 @@ public class ExpressionTypeChecker extends Visitor<Type> {
                     SymbolTable.top.getItem(VariableSymbolTableItem.START_KEY + identifier.getName());
             return variableSymbolTableItem.getType();
         } catch (ItemNotFoundException e) {
-            identifier.addError(new VarNotDeclared(identifier.getLine(), identifier.getName()));
-            return new NoType();
+            try {
+                FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) SymbolTable.root.getItem(FunctionSymbolTableItem.START_KEY + identifier.getName());
+                return functionSymbolTableItem.getFunctionDeclaration().getReturnType();
+            } catch (ItemNotFoundException ex) {
+                identifier.addError(new VarNotDeclared(identifier.getLine(), identifier.getName()));
+                return new NoType();
+            }
         }
     }
 
