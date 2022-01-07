@@ -238,7 +238,8 @@ loopStatement returns[LoopStmt loopStatementRet]:
 
 
 whileLoopStatement returns [LoopStmt stmt]:
-    {$stmt = new LoopStmt();}
+    {$stmt = new LoopStmt();
+     $stmt.setIsDoWhile(false);}
     w = WHILE exp = expression
     {$stmt.setCondition($exp.exprRet);
      $stmt.setLine($w.getLine());}
@@ -248,7 +249,8 @@ whileLoopStatement returns [LoopStmt stmt]:
 
 
 doWhileLoopStatement returns [LoopStmt stmt]:
-    {$stmt = new LoopStmt();}
+    {$stmt = new LoopStmt();
+     $stmt.setIsDoWhile(true);}
     d = DO bd = body
     {$stmt.setBody($bd.bodyRet);
      $stmt.setLine($d.getLine());}

@@ -1,4 +1,4 @@
-// Generated from /home/tapsi/codes/c--/src/main/grammar/Cmm.g4 by ANTLR 4.9.1
+// Generated from /home/tapsi/codes/c--/src/main/grammar/Cmm.g4 by ANTLR 4.9.2
 package main.grammar;
 
      import main.ast.nodes.*;
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class CmmParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.9.1", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.9.2", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -2206,6 +2206,7 @@ public class CmmParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			((WhileLoopStatementContext)_localctx).stmt =  new LoopStmt();
+			     _localctx.stmt.setIsDoWhile(false);
 			setState(427);
 			((WhileLoopStatementContext)_localctx).w = match(WHILE);
 			setState(428);
@@ -2272,6 +2273,7 @@ public class CmmParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			((DoWhileLoopStatementContext)_localctx).stmt =  new LoopStmt();
+			     _localctx.stmt.setIsDoWhile(true);
 			setState(434);
 			((DoWhileLoopStatementContext)_localctx).d = match(DO);
 			setState(435);

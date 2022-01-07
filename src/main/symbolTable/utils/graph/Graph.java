@@ -6,7 +6,7 @@ import main.symbolTable.utils.graph.exceptions.NodeAlreadyExistsException;
 import java.util.*;
 
 public class Graph<N> {
-    private Map<N, Set<N>> parentShipRelation = new HashMap<>();
+    private final Map<N, Set<N>> parentShipRelation = new HashMap<>();
 
     public void addNode(N desired) throws NodeAlreadyExistsException {
         if (parentShipRelation.containsKey(desired))

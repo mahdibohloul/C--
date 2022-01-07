@@ -7,6 +7,7 @@ import main.visitor.IVisitor;
 public class LoopStmt extends Statement {
     private Expression condition;
     private Statement body;
+    private boolean isDoWhile;
 
     public Expression getCondition() {
         return condition;
@@ -22,6 +23,14 @@ public class LoopStmt extends Statement {
 
     public void setBody(Statement body) {
         this.body = body;
+    }
+
+    public boolean getIsDoWhile() {
+        return isDoWhile;
+    }
+
+    public void setIsDoWhile(boolean isDoWhile) {
+        this.isDoWhile = isDoWhile;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package main.compileError;
 
 public class CompileError extends Exception {
-    private int line;
+    private final int line;
     protected String message;
 
     public CompileError(int line, String message) {

@@ -22,11 +22,11 @@ import java.util.ArrayList;
 
 public class NameAnalyser extends Visitor<Void> {
 
-    private final Graph<String> structHierarchy = new Graph<>();
     private int newId = 1;
     private boolean firstVisit = true;
     private boolean isInStruct = false;
     private String curStructName;
+    private final Graph<String> structHierarchy = new Graph<>();
 
     private void createStructSymbolTable(StructDeclaration structDec) {
         SymbolTable newSymbolTable = new SymbolTable();

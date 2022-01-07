@@ -4,13 +4,17 @@ import main.ast.nodes.Program;
 import main.grammar.CmmLexer;
 import main.grammar.CmmParser;
 import main.visitor.ErrorReporter;
+import main.visitor.codeGenerator.CodeGenerator;
 import main.visitor.name.NameAnalyser;
 import main.visitor.type.TypeChecker;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import java.io.*;
+
 public class CmmCompiler {
     public void compile(CharStream textStream) {
+        System.out.println("\n--------------------------Compiling--------------------------");
         CmmLexer cmmLexer = new CmmLexer(textStream);
         CommonTokenStream tokenStream = new CommonTokenStream(cmmLexer);
         CmmParser cmmParser = new CmmParser(tokenStream);
@@ -31,10 +35,38 @@ public class CmmCompiler {
         if (numberOfErrors > 0)
             System.exit(1);
 
+        CodeGenerator codeGenerator = new CodeGenerator();
+        program.accept(codeGenerator);
+
         System.out.println("Compilation successful");
 
-//        ASTTreePrinter astTreePrinter = new ASTTreePrinter();
-//        program.accept(astTreePrinter);
+        runJasminFiles();
+    }
 
+    private void runJasminFiles() {
+        try {
+            System.out.println("\n-------------------Generating Class Files-------------------");
+            File dir = new File("./output");
+            Process process = Runtime.getRuntime().exec("java -jar jasmin.jar *.j", null, dir);
+            printResults(process.getInputStream());
+            printResults(process.getErrorStream());
+            System.out.println("\n---------------------------Output---------------------------");
+            process = Runtime.getRuntime().exec("java Main", null, dir);
+            printResults(process.getInputStream());
+            printResults(process.getErrorStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void printResults(InputStream stream) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        String line;
+        try {
+            while ((line = reader.readLine()) != null)
+                System.out.println(line);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
