@@ -1,3 +1,20 @@
+struct ProductCatalog begin
+    int id
+    int price
+end
+
+struct Order begin
+    int quantity
+    struct ProductCatalog product
+end
+
+struct Order createOrder(struct ProductCatalog product, int quantity) begin
+    struct Order order
+    order.quantity = quantity
+    order.product = product
+    return order
+end
+
 int f(int a, int b) begin
     list #int li
     append(li, a)

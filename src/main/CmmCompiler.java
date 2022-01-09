@@ -40,7 +40,7 @@ public class CmmCompiler {
 
         System.out.println("Compilation successful");
 
-        runJasminFiles();
+//        runJasminFiles();
     }
 
     private void runJasminFiles() {
