@@ -17,6 +17,10 @@ import main.ast.types.Type;
 import main.ast.types.primitives.BoolType;
 import main.ast.types.primitives.IntType;
 import main.ast.types.primitives.VoidType;
+import main.symbolTable.SymbolTable;
+import main.symbolTable.exceptions.ItemNotFoundException;
+import main.symbolTable.items.FunctionSymbolTableItem;
+import main.symbolTable.items.StructSymbolTableItem;
 import main.visitor.Visitor;
 import main.visitor.type.ExpressionTypeChecker;
 
@@ -27,11 +31,12 @@ public class CodeGenerator extends Visitor<String> {
     ExpressionTypeChecker expressionTypeChecker = new ExpressionTypeChecker();
     private String outputPath;
     private FileWriter currentFile;
-    private ArrayList<String> localVars = new ArrayList<>();
+    private final ArrayList<String> localVars = new ArrayList<>();
     private boolean inStruct;
     private boolean inCtor;
     private static final int stackLimit = 128;
     private static final int localLimit = 128;
+    private static final char NEW_LINE = '\n';
 
     @Override
     public String visit(Program program) {
@@ -53,6 +58,12 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(StructDeclaration structDeclaration) {
+        try {
+            String structKey = StructSymbolTableItem.START_KEY + structDeclaration.getStructName().getName();
+            StructSymbolTableItem structSymbolTableItem = (StructSymbolTableItem) SymbolTable.root.getItem(structKey);
+            SymbolTable.push(structSymbolTableItem.getStructSymbolTable());
+        } catch (ItemNotFoundException e) {//unreachable
+        }
         createFile(structDeclaration.getStructName().getName());
         inStruct = true;
         createClass(structDeclaration.getStructName().getName());
@@ -70,11 +81,18 @@ public class CodeGenerator extends Visitor<String> {
         inStruct = false;
         inCtor = false;
         clearLocalVars();
+        SymbolTable.pop();
         return null;
     }
 
     @Override
     public String visit(FunctionDeclaration functionDeclaration) {
+        try {
+            String functionKey = FunctionSymbolTableItem.START_KEY + functionDeclaration.getFunctionName().getName();
+            FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) SymbolTable.root.getItem(functionKey);
+            SymbolTable.push(functionSymbolTableItem.getFunctionSymbolTable());
+        } catch (ItemNotFoundException e) {//unreachable
+        }
         StringBuilder functionDec = new StringBuilder(".method public " + functionDeclaration.getFunctionName().getName() + "(");
         addField(functionDeclaration.getFunctionName().getName());
         for (VariableDeclaration variableDeclaration : functionDeclaration.getArgs()) {
@@ -87,12 +105,21 @@ public class CodeGenerator extends Visitor<String> {
         functionDec.append(jasminType);
         addCommand(functionDec.toString());
         functionDeclaration.getBody().accept(this);
+        if (functionDeclaration.getReturnType() instanceof VoidType) handleVoidFunction();
+        addCommand(".end method");
         clearLocalVars();
+        SymbolTable.pop();
         return null;
     }
 
     @Override
     public String visit(MainDeclaration mainDeclaration) {
+        try {
+            String functionKey = FunctionSymbolTableItem.START_KEY + "main";
+            FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem) SymbolTable.root.getItem(functionKey);
+            SymbolTable.push(functionSymbolTableItem.getFunctionSymbolTable());
+        } catch (ItemNotFoundException e) {//unreachable
+        }
         createClass("Main");
         addStaticMainMethod();
         inCtor = true;
@@ -101,10 +128,12 @@ public class CodeGenerator extends Visitor<String> {
         addCommand(".limit locals " + localLimit);
         addCommand("aload_0");
         addCommand("invokespecial java/lang/Object/<init>()V");
+        mainDeclaration.getBody().accept(this);
+        inCtor = false;
+        clearLocalVars();
         addCommand("return");
         addCommand(".end method");
-        inCtor = false;
-        mainDeclaration.getBody().accept(this);
+        SymbolTable.pop();
         return null;
     }
 
@@ -120,7 +149,8 @@ public class CodeGenerator extends Visitor<String> {
             }
         } else {
             addField(variableDeclaration.getVarName().getName());
-            System.out.println("Field " + variableDeclaration.getVarName().getName() + " added");
+            putDefaultValue(variableDeclaration);
+            storeVariable(variableDeclaration);
         }
         return null;
     }
@@ -178,7 +208,15 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ReturnStmt returnStmt) {
-        //todo
+        if (returnStmt.getReturnedExpr() != null) {
+            addCommand(returnStmt.getReturnedExpr().accept(this));
+            Type returnType = returnStmt.getReturnedExpr().accept(expressionTypeChecker);
+            if (returnType instanceof IntType || returnType instanceof BoolType) {
+                addCommand("ireturn");
+                return null;
+            }
+            addCommand("areturn");
+        }
         return null;
     }
 
@@ -190,13 +228,17 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(VarDecStmt varDecStmt) {
-        //todo
+        for (VariableDeclaration variableDeclaration : varDecStmt.getVars()) {
+            variableDeclaration.accept(this);
+        }
         return null;
     }
 
     @Override
     public String visit(ListAppendStmt listAppendStmt) {
-        //todo
+        expressionTypeChecker.setInFunctionCallStmt(true);
+        addCommand(listAppendStmt.getListAppendExpr().accept(this));
+        expressionTypeChecker.setInFunctionCallStmt(false);
         return null;
     }
 
@@ -231,8 +273,15 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ListAccessByIndex listAccessByIndex) {
-        //todo
-        return null;
+        StringBuilder commands = new StringBuilder();
+        Type elementType = ((ListType) listAccessByIndex.getInstance().accept(expressionTypeChecker)).getType();
+        commands.append(listAccessByIndex.getInstance().accept(this));
+        commands.append(listAccessByIndex.getIndex().accept(this));
+        commands.append(invokeListGetElement());
+        commands.append(NEW_LINE);
+        commands.append(invokeCheckCast(elementType));
+        commands.append(NEW_LINE);
+        return commands.toString();
     }
 
     @Override
@@ -249,20 +298,28 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ListAppend listAppend) {
-        //todo
-        return null;
+        return listAppend.getListArg().accept(this) +
+                listAppend.getElementArg().accept(this) +
+                invokeListAddElement() +
+                NEW_LINE;
     }
 
     @Override
     public String visit(IntValue intValue) {
-        //todo
-        return null;
+        String command = "ldc " + intValue.getConstant();
+        command += NEW_LINE;
+        command += invokeValueOfInt();
+        command += NEW_LINE;
+        return command;
     }
 
     @Override
     public String visit(BoolValue boolValue) {
-        //todo
-        return null;
+        String command = boolValue.getConstant() ? "ldc 1" : "ldc 0";
+        command += NEW_LINE;
+        command += invokeValueOfBoolean();
+        command += NEW_LINE;
+        return command;
     }
 
     @Override
@@ -421,7 +478,48 @@ public class CodeGenerator extends Visitor<String> {
         return localVars.get(0);
     }
 
+    private void handleVoidFunction() {
+        pop();
+        addCommand("return");
+    }
+
     private void pop() {
         addCommand("pop");
+    }
+
+    private void storeVariable(VariableDeclaration variableDeclaration) {
+        if (variableDeclaration.getVarType() instanceof IntType ||
+                variableDeclaration.getVarType() instanceof BoolType) {
+            addCommand("istore" + getProperSlot(variableDeclaration.getVarName().getName()));
+            return;
+        }
+        addCommand("astore" + getProperSlot(variableDeclaration.getVarName().getName()));
+    }
+
+    private String getProperSlot(String identifier) {
+        int slot = slotOf(identifier);
+        if (slot < 4)
+            return "_" + slot;
+        return " " + slot;
+    }
+
+    private String invokeListGetElement() {
+        return "invokevirtual List/getElement(I)Ljava/lang/Object";
+    }
+
+    private String invokeListAddElement() {
+        return "invokevirtual List/addElement(Ljava/lang/Object;)V";
+    }
+
+    private String invokeValueOfBoolean() {
+        return "invokestatic java/lang/Boolean/valueOf(Z)Ljava/lang/Boolean";
+    }
+
+    private String invokeValueOfInt() {
+        return "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer";
+    }
+
+    private String invokeCheckCast(Type type) {
+        return "chackcast " + getJasminType(type);
     }
 }
