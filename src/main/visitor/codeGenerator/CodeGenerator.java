@@ -37,6 +37,7 @@ public class CodeGenerator extends Visitor<String> {
     private final Map<String, ArrayList<Type>> functionPointers = new HashMap<>();
     private boolean inStruct;
     private boolean inCtor;
+    private boolean inCondition;
     private static final int stackLimit = 128;
     private static final int localLimit = 128;
     private static final char NEW_LINE = '\n';
@@ -44,6 +45,14 @@ public class CodeGenerator extends Visitor<String> {
     private static final String loadPrimitive = "iload";
     private static final String storePrimitive = "istore";
     private static final String storeObject = "astore";
+    private static final String add = "iadd";
+    private static final String sub = "isub";
+    private static final String mult = "imul";
+    private static final String div = "idiv";
+    private static String afterLabel;
+    private static String trueLabel;
+    private static String falseLabel;
+    private static int labelCounter = 0;
 
     @Override
     public String visit(Program program) {
@@ -188,13 +197,16 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ConditionalStmt conditionalStmt) {
-        //todo
+        String afterLabel = getNewLabel();
         return null;
     }
 
     @Override
     public String visit(FunctionCallStmt functionCallStmt) {
-        //todo
+        expressionTypeChecker.setInFunctionCallStmt(true);
+        functionCallStmt.getFunctionCall().accept(this);
+        expressionTypeChecker.setInFunctionCallStmt(false);
+        pop();
         return null;
     }
 
@@ -251,13 +263,94 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ListSizeStmt listSizeStmt) {
-        //todo
+        addCommand(listSizeStmt.getListSizeExpr().accept(this));
+        pop();
         return null;
     }
 
     @Override
     public String visit(BinaryExpression binaryExpression) {
-        //todo
+        BinaryOperator op = binaryExpression.getBinaryOperator();
+        Expression left = binaryExpression.getFirstOperand();
+        Expression right = binaryExpression.getSecondOperand();
+        switch (op) {
+            case add, div, mult, sub -> {
+                return left.accept(this) + NEW_LINE +
+                        invokeIntegerToInt() + NEW_LINE +
+                        right.accept(this) + NEW_LINE +
+                        invokeIntegerToInt() + NEW_LINE + getOperatorAsString(op) + NEW_LINE;
+            }
+            case and -> {
+                String trueLabel = getNewLabel();
+                String afterLabel = getNewLabel();
+                String nextLabel = getNewLabel();
+                return left.accept(this) +
+                        NEW_LINE +
+                        invokeBooleanToBool() +
+                        NEW_LINE +
+                        "iconst_0" +
+                        NEW_LINE +
+                        "ifne " + nextLabel +
+                        NEW_LINE +
+                        invokeGoto(afterLabel) +
+                        NEW_LINE +
+                        invokeLabel(nextLabel) +
+                        NEW_LINE +
+                        right.accept(this) +
+                        NEW_LINE +
+                        invokeBooleanToBool() +
+                        NEW_LINE +
+                        "iconst_0" +
+                        NEW_LINE +
+                        "ifne " + trueLabel +
+                        NEW_LINE +
+                        invokeGoto(afterLabel) +
+                        NEW_LINE +
+                        invokeLabel(trueLabel) +
+                        NEW_LINE +
+                        "iconst_1" +
+                        NEW_LINE +
+                        invokeGoto(afterLabel) +
+                        NEW_LINE +
+                        invokeLabel(afterLabel) +
+                        NEW_LINE;
+            }
+            case or -> {
+                String trueLabel = getNewLabel();
+                String afterLabel = getNewLabel();
+                String nextLabel = getNewLabel();
+
+                return left.accept(this) + NEW_LINE +
+                        invokeBooleanToBool() + NEW_LINE +
+                        "iconst_1" + NEW_LINE +
+                        "ifne " + nextLabel + NEW_LINE +
+                        invokeGoto(trueLabel) + NEW_LINE +
+                        invokeLabel(nextLabel) + NEW_LINE +
+                        right.accept(this) + NEW_LINE +
+                        invokeBooleanToBool() + NEW_LINE +
+                        "iconst_1" + NEW_LINE +
+                        "ifne " + afterLabel + NEW_LINE +
+                        invokeGoto(trueLabel) + NEW_LINE +
+                        invokeLabel(trueLabel) + NEW_LINE;
+            }
+            case assign -> {
+                if (left instanceof Identifier) {
+                    return right.accept(this) + NEW_LINE +
+                            storeObject + getProperSlot(((Identifier) left).getName()) + NEW_LINE;
+
+
+                }
+            }
+            case eq -> {
+
+            }
+            case gt -> {
+
+
+            }
+            case lt -> {
+            }
+        }
         return null;
     }
 
@@ -268,8 +361,15 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(StructAccess structAccess) {
-        //todo
-        return null;
+        String command = structAccess.getInstance().accept(this);
+
+        Type elementType = structAccess.accept(expressionTypeChecker);
+        StructType structType = (StructType) structAccess.getInstance().accept(expressionTypeChecker);
+
+        command += getClassProperty(structType.getStructName().getName(),
+                structAccess.getElement().getName(), elementType);
+        command += NEW_LINE;
+        return command;
     }
 
     @Override
@@ -294,13 +394,38 @@ public class CodeGenerator extends Visitor<String> {
         commands.append(NEW_LINE);
         commands.append(invokeCheckCast(elementType));
         commands.append(NEW_LINE);
+        if (elementType instanceof IntType) {
+            commands.append(invokeIntegerToInt());
+            commands.append(NEW_LINE);
+        } else if (elementType instanceof BoolType) {
+            commands.append(invokeBooleanToBool());
+            commands.append(NEW_LINE);
+        }
+        commands.append(invokeArrayListAdd());
+        commands.append(NEW_LINE);
         return commands.toString();
     }
 
     @Override
     public String visit(FunctionCall functionCall) {
-        //todo
-        return null;
+        StringBuilder commands = new StringBuilder();
+        commands.append(newArrayList());
+        commands.append(NEW_LINE);
+        for (Expression argument : functionCall.getArgs()) {
+            Type argumentType = argument.accept(expressionTypeChecker);
+            commands.append(argument.accept(this));
+            commands.append(NEW_LINE);
+            if (argumentType instanceof IntType) {
+                commands.append(invokeValueOfInt());
+                commands.append(NEW_LINE);
+            } else if (argumentType instanceof BoolType) {
+                commands.append(invokeBooleanToBool());
+                commands.append(NEW_LINE);
+            }
+            commands.append(invokeArrayListAdd());
+            commands.append(NEW_LINE);
+        }
+        return commands.toString();
     }
 
     @Override
@@ -474,6 +599,10 @@ public class CodeGenerator extends Visitor<String> {
                 getJasminType(variableDeclaration.getVarType()));
     }
 
+    private String getClassProperty(String structName, String elementName, Type elementType) {
+        return "getfield " + structName + "/" + elementName + " " + getJasminType(elementType);
+    }
+
     private void putDefaultValue(VariableDeclaration variableDeclaration) {
         if (variableDeclaration.getDefaultValue() != null) {
             addCommand(variableDeclaration.getDefaultValue().accept(this));
@@ -538,6 +667,18 @@ public class CodeGenerator extends Visitor<String> {
         return "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer";
     }
 
+    private String invokeIntegerToInt() {
+        return "invokevirtual java/lang/Integer/intValue()I";
+    }
+
+    private String invokeBooleanToBool() {
+        return "invokevirtual java/lang/Boolean/booleanValue()Z";
+    }
+
+    private String invokeArrayListAdd() {
+        return "invokevirtual java/util/ArrayList/add(Ljava/lang/Object;)Z";
+    }
+
     private String invokeCheckCast(Type type) {
         return "chackcast " + getJasminType(type);
     }
@@ -564,5 +705,39 @@ public class CodeGenerator extends Visitor<String> {
 
     private ArrayList<Type> getFptrArgs(String fptrName) {
         return functionPointers.get(fptrName);
+    }
+
+    private String getNewLabel() {
+        return "Label_" + labelCounter++;
+    }
+
+    private String newArrayList() {
+        return "new ArrayList";
+    }
+
+    private String invokeGoto(String label) {
+        return "goto " + label;
+    }
+
+    private String invokeLabel(String label) {
+        return label + ":";
+    }
+
+    private String getOperatorAsString(BinaryOperator binaryOperator) {
+        switch (binaryOperator) {
+            case add -> {
+                return add;
+            }
+            case sub -> {
+                return sub;
+            }
+            case mult -> {
+                return mult;
+            }
+            case div -> {
+                return div;
+            }
+        }
+        return null;
     }
 }
