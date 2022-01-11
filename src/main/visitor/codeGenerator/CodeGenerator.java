@@ -26,17 +26,24 @@ import main.visitor.type.ExpressionTypeChecker;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CodeGenerator extends Visitor<String> {
     ExpressionTypeChecker expressionTypeChecker = new ExpressionTypeChecker();
     private String outputPath;
     private FileWriter currentFile;
     private final ArrayList<String> localVars = new ArrayList<>();
+    private final Map<String, ArrayList<Type>> functionPointers = new HashMap<>();
     private boolean inStruct;
     private boolean inCtor;
     private static final int stackLimit = 128;
     private static final int localLimit = 128;
     private static final char NEW_LINE = '\n';
+    private static final String loadObject = "aloud";
+    private static final String loadPrimitive = "iload";
+    private static final String storePrimitive = "istore";
+    private static final String storeObject = "astore";
 
     @Override
     public String visit(Program program) {
@@ -265,38 +272,16 @@ public class CodeGenerator extends Visitor<String> {
         return null;
     }
 
-    //TODO: mahdiiii please check this
     @Override
     public String visit(Identifier identifier) {
-        String command="";
-        try {
-            String functionKey = FunctionSymbolTableItem.START_KEY + identifier.getName();
-            FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem)SymbolTable.root.getItem(functionKey);
-            command += "new Fptr\n";
-            command += "aload_0";
-            if(slotOf(identifier.getName())<4)
-                command += "aload_" + slotOf(identifier.getName());
-            else
-                command += "aload " + slotOf(identifier.getName());
-
-            command += "invokespecial Fptr/<int>(Ljava/lang/String;)v\n";
-
-        } catch (ItemNotFoundException e) {
-            Type idType = identifier.accept(expressionTypeChecker);
-            if(idType instanceof IntType || idType instanceof BoolType){
-                if(slotOf(identifier.getName()) < 4)
-                    command += "iload_" + slotOf(identifier.getName());
-                else
-                    command += "iload " + slotOf(identifier.getName());
-            }else {
-                if(slotOf(identifier.getName()) < 4)
-                    command += "aload_" + slotOf(identifier.getName());
-                else
-                    command += "aload " + slotOf(identifier.getName());
-            }
-           command += "\n";
+        Type identifierType = identifier.accept(expressionTypeChecker);
+        if (identifierType instanceof IntType || identifierType instanceof BoolType) {
+            return loadPrimitive + getProperSlot(identifier.getName()) + NEW_LINE;
         }
-        return command;
+        if (identifierType instanceof FptrType) {
+            return newFptrObject(identifier.getName()) + NEW_LINE;
+        }
+        return loadObject + getProperSlot(identifier.getName()) + NEW_LINE;
     }
 
     @Override
@@ -318,12 +303,11 @@ public class CodeGenerator extends Visitor<String> {
         return null;
     }
 
-    //TODO: mahdiiii please check this
     @Override
     public String visit(ListSize listSize) {
         String command = listSize.getArg().accept(this);
-        command += "invokevirtual List/getSize()I\n";
-        command += "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;\n";
+        command += invokeListGetSize() + NEW_LINE;
+        command += invokeValueOfInt() + NEW_LINE;
         return command;
     }
 
@@ -521,10 +505,10 @@ public class CodeGenerator extends Visitor<String> {
     private void storeVariable(VariableDeclaration variableDeclaration) {
         if (variableDeclaration.getVarType() instanceof IntType ||
                 variableDeclaration.getVarType() instanceof BoolType) {
-            addCommand("istore" + getProperSlot(variableDeclaration.getVarName().getName()));
+            addCommand(storePrimitive + getProperSlot(variableDeclaration.getVarName().getName()));
             return;
         }
-        addCommand("astore" + getProperSlot(variableDeclaration.getVarName().getName()));
+        addCommand(storeObject + getProperSlot(variableDeclaration.getVarName().getName()));
     }
 
     private String getProperSlot(String identifier) {
@@ -542,6 +526,10 @@ public class CodeGenerator extends Visitor<String> {
         return "invokevirtual List/addElement(Ljava/lang/Object;)V";
     }
 
+    private String invokeListGetSize() {
+        return "invokevirtual List/getSize()I";
+    }
+
     private String invokeValueOfBoolean() {
         return "invokestatic java/lang/Boolean/valueOf(Z)Ljava/lang/Boolean";
     }
@@ -552,5 +540,29 @@ public class CodeGenerator extends Visitor<String> {
 
     private String invokeCheckCast(Type type) {
         return "chackcast " + getJasminType(type);
+    }
+
+    private String invokeFptr() {
+        return "invokevirtual Fptr/invoke()Ljava/lang/Object";
+    }
+
+    private String initiateFptr() {
+        return "invokespecial Fptr/<init>(Ljava/lang/Object;Ljava/lang/String;)V";
+    }
+
+    private String newFptrObject(String identifierName) {
+        return "new Fptr" +
+                NEW_LINE +
+                (loadObject + getProperSlot(identifierName)) +
+                NEW_LINE +
+                initiateFptr();
+    }
+
+    private void setFptrArgs(String fptrName, ArrayList<Type> args) {
+        functionPointers.put(fptrName, args);
+    }
+
+    private ArrayList<Type> getFptrArgs(String fptrName) {
+        return functionPointers.get(fptrName);
     }
 }
