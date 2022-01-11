@@ -265,10 +265,38 @@ public class CodeGenerator extends Visitor<String> {
         return null;
     }
 
+    //TODO: mahdiiii please check this
     @Override
     public String visit(Identifier identifier) {
-        //todo
-        return null;
+        String command="";
+        try {
+            String functionKey = FunctionSymbolTableItem.START_KEY + identifier.getName();
+            FunctionSymbolTableItem functionSymbolTableItem = (FunctionSymbolTableItem)SymbolTable.root.getItem(functionKey);
+            command += "new Fptr\n";
+            command += "aload_0";
+            if(slotOf(identifier.getName())<4)
+                command += "aload_" + slotOf(identifier.getName());
+            else
+                command += "aload " + slotOf(identifier.getName());
+
+            command += "invokespecial Fptr/<int>(Ljava/lang/String;)v\n";
+
+        } catch (ItemNotFoundException e) {
+            Type idType = identifier.accept(expressionTypeChecker);
+            if(idType instanceof IntType || idType instanceof BoolType){
+                if(slotOf(identifier.getName()) < 4)
+                    command += "iload_" + slotOf(identifier.getName());
+                else
+                    command += "iload " + slotOf(identifier.getName());
+            }else {
+                if(slotOf(identifier.getName()) < 4)
+                    command += "aload_" + slotOf(identifier.getName());
+                else
+                    command += "aload " + slotOf(identifier.getName());
+            }
+           command += "\n";
+        }
+        return command;
     }
 
     @Override
@@ -290,10 +318,13 @@ public class CodeGenerator extends Visitor<String> {
         return null;
     }
 
+    //TODO: mahdiiii please check this
     @Override
     public String visit(ListSize listSize) {
-        //todo
-        return null;
+        String command = listSize.getArg().accept(this);
+        command += "invokevirtual List/getSize()I\n";
+        command += "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;\n";
+        return command;
     }
 
     @Override
