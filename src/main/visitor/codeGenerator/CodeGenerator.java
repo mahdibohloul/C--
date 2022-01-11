@@ -249,9 +249,12 @@ public class CodeGenerator extends Visitor<String> {
         return null;
     }
 
+    //TODO: mahdiiii please check this
     @Override
     public String visit(ListSizeStmt listSizeStmt) {
-        //todo
+        String command = listSizeStmt.getListSizeExpr().accept(this);
+        addCommand(command);
+        addCommand("pop");
         return null;
     }
 
@@ -294,13 +297,33 @@ public class CodeGenerator extends Visitor<String> {
         commands.append(NEW_LINE);
         commands.append(invokeCheckCast(elementType));
         commands.append(NEW_LINE);
+
+        //TODO: mahdiiii please check this
+        if (((ListType) elementType).getType() instanceof IntType) {
+            commands.append("invokevirtual java/lang/Integer/intValue()I\n");
+        }
+        else if (((ListType) elementType).getType() instanceof BoolType) {
+            commands.append("invokevirtual java/lang/Boolean/booleanValue()Z\n");
+        }
+
         return commands.toString();
     }
 
+    //TODO: mahdiiii please check this
     @Override
     public String visit(FunctionCall functionCall) {
-        //todo
-        return null;
+        String command = "new ArrayList\n";
+        for(Expression argumnet: functionCall.getArgs()){
+            Type argumnentType = argumnet.accept(expressionTypeChecker);
+            command += argumnet.accept(this);
+            if(argumnentType instanceof IntType){
+                command += "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;";
+            }else if(argumnentType instanceof BoolType){
+                command += "invokestatic java/lang/Boolean/valueOf(Z)Ljava/lang/Boolean;";
+            }
+            command += "invokevirtual java/util/ArrayList/add(Ljava/lang/Object;)Z";
+        }
+        return command;
     }
 
     @Override
