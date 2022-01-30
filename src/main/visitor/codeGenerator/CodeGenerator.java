@@ -37,11 +37,10 @@ public class CodeGenerator extends Visitor<String> {
     private final Map<String, ArrayList<Type>> functionPointers = new HashMap<>();
     private boolean inStruct;
     private boolean inCtor;
-    private boolean inCondition;
     private static final int stackLimit = 128;
     private static final int localLimit = 128;
     private static final char NEW_LINE = '\n';
-    private static final String loadObject = "aloud";
+    private static final String loadObject = "aload";
     private static final String loadPrimitive = "iload";
     private static final String storePrimitive = "istore";
     private static final String storeObject = "astore";
@@ -113,13 +112,17 @@ public class CodeGenerator extends Visitor<String> {
         addField(functionDeclaration.getFunctionName().getName());
         for (VariableDeclaration variableDeclaration : functionDeclaration.getArgs()) {
             String jasminType = getJasminType(variableDeclaration.getVarType());
-            functionDec.append(jasminType).append(";");
+            functionDec.append(jasminType);
+            if (!functionDec.toString().endsWith(";"))
+                functionDec.append(";");
             addField(variableDeclaration.getVarName().getName());
         }
         functionDec.append(")");
         String jasminType = getJasminType(functionDeclaration.getReturnType());
         functionDec.append(jasminType);
         addCommand(functionDec.toString());
+        addCommand(".limit stack " + stackLimit);
+        addCommand(".limit locals " + localLimit);
         functionDeclaration.getBody().accept(this);
         if (functionDeclaration.getReturnType() instanceof VoidType) handleVoidFunction();
         addCommand(".end method");
@@ -144,6 +147,7 @@ public class CodeGenerator extends Visitor<String> {
         addCommand(".limit locals " + localLimit);
         addCommand("aload_0");
         addCommand("invokespecial java/lang/Object/<init>()V");
+        addField("Main");
         mainDeclaration.getBody().accept(this);
         inCtor = false;
         clearLocalVars();
@@ -197,7 +201,17 @@ public class CodeGenerator extends Visitor<String> {
 
     @Override
     public String visit(ConditionalStmt conditionalStmt) {
-        String afterLabel = getNewLabel();
+        afterLabel = getNewLabel();
+        trueLabel = getNewLabel();
+        falseLabel = getNewLabel();
+        addCommand(conditionalStmt.getCondition().accept(this));
+        addCommand(invokeLabel(trueLabel) + NEW_LINE);
+        conditionalStmt.getThenBody().accept(this);
+        addCommand(invokeLabel(falseLabel) + NEW_LINE);
+        if (conditionalStmt.getElseBody() != null) {
+            conditionalStmt.getElseBody().accept(this);
+        }
+        addCommand(invokeLabel(afterLabel) + NEW_LINE);
         return null;
     }
 
@@ -217,10 +231,14 @@ public class CodeGenerator extends Visitor<String> {
         String commandsOfArg = displayStmt.getArg().accept(this);
 
         addCommand(commandsOfArg);
-        if (argType instanceof IntType)
+        if (argType instanceof IntType) {
+            addCommand(invokeIntegerToInt());
             addCommand("invokevirtual java/io/PrintStream/println(I)V");
-        if (argType instanceof BoolType)
+        }
+        if (argType instanceof BoolType) {
+            addCommand(invokeBooleanToBool());
             addCommand("invokevirtual java/io/PrintStream/println(Z)V");
+        }
 
         return null;
     }
@@ -231,7 +249,7 @@ public class CodeGenerator extends Visitor<String> {
             addCommand(returnStmt.getReturnedExpr().accept(this));
             Type returnType = returnStmt.getReturnedExpr().accept(expressionTypeChecker);
             if (returnType instanceof IntType || returnType instanceof BoolType) {
-                addCommand("ireturn");
+                addCommand("areturn");
                 return null;
             }
             addCommand("areturn");
@@ -281,18 +299,15 @@ public class CodeGenerator extends Visitor<String> {
                         invokeIntegerToInt() + NEW_LINE + getOperatorAsString(op) + NEW_LINE;
             }
             case and -> {
-                String trueLabel = getNewLabel();
-                String afterLabel = getNewLabel();
                 String nextLabel = getNewLabel();
                 return left.accept(this) +
-                        NEW_LINE +
                         invokeBooleanToBool() +
                         NEW_LINE +
                         "iconst_0" +
                         NEW_LINE +
                         "ifne " + nextLabel +
                         NEW_LINE +
-                        invokeGoto(afterLabel) +
+                        invokeGoto(falseLabel) +
                         NEW_LINE +
                         invokeLabel(nextLabel) +
                         NEW_LINE +
@@ -304,20 +319,12 @@ public class CodeGenerator extends Visitor<String> {
                         NEW_LINE +
                         "ifne " + trueLabel +
                         NEW_LINE +
-                        invokeGoto(afterLabel) +
-                        NEW_LINE +
-                        invokeLabel(trueLabel) +
+                        invokeGoto(falseLabel) +
                         NEW_LINE +
                         "iconst_1" +
-                        NEW_LINE +
-                        invokeGoto(afterLabel) +
-                        NEW_LINE +
-                        invokeLabel(afterLabel) +
                         NEW_LINE;
             }
             case or -> {
-                String trueLabel = getNewLabel();
-                String afterLabel = getNewLabel();
                 String nextLabel = getNewLabel();
 
                 return left.accept(this) + NEW_LINE +
@@ -330,18 +337,13 @@ public class CodeGenerator extends Visitor<String> {
                         invokeBooleanToBool() + NEW_LINE +
                         "iconst_1" + NEW_LINE +
                         "ifne " + afterLabel + NEW_LINE +
-                        invokeGoto(trueLabel) + NEW_LINE +
-                        invokeLabel(trueLabel) + NEW_LINE;
+                        invokeGoto(trueLabel) + NEW_LINE;
             }
             case assign -> {
-                if (left instanceof Identifier) {
-                    return right.accept(this) + NEW_LINE +
-                            storeObject + getProperSlot(((Identifier) left).getName()) + NEW_LINE;
-
-
-                }
+                return handleAssignExpression(left, right) + NEW_LINE;
             }
             case eq -> {
+
 
             }
             case gt -> {
@@ -376,7 +378,7 @@ public class CodeGenerator extends Visitor<String> {
     public String visit(Identifier identifier) {
         Type identifierType = identifier.accept(expressionTypeChecker);
         if (identifierType instanceof IntType || identifierType instanceof BoolType) {
-            return loadPrimitive + getProperSlot(identifier.getName()) + NEW_LINE;
+            return loadObject + getProperSlot(identifier.getName()) + NEW_LINE;
         }
         if (identifierType instanceof FptrType) {
             return newFptrObject(identifier.getName()) + NEW_LINE;
@@ -469,13 +471,13 @@ public class CodeGenerator extends Visitor<String> {
 
     private String getJasminType(Type type) {
         if (type instanceof IntType)
-            return "java/lang/Integer";
+            return "Ljava/lang/Integer;";
         if (type instanceof BoolType)
-            return "java/lang/Boolean";
+            return "Ljava/lang/Boolean;";
         if (type instanceof ListType)
-            return "List";
+            return "LList;";
         if (type instanceof StructType)
-            return ((StructType) type).getStructName().getName();
+            return "L" + ((StructType) type).getStructName().getName() + ";";
         if (type instanceof VoidType)
             return "V";
         if (type instanceof FptrType)
@@ -594,9 +596,15 @@ public class CodeGenerator extends Visitor<String> {
     private void initialClassProperty(VariableDeclaration variableDeclaration) {
         addCommand("aload_0");
         putDefaultValue(variableDeclaration);
-        addCommand("putfield " + getCurrentClass() + "/" +
-                variableDeclaration.getVarName().getName() + " " +
-                getJasminType(variableDeclaration.getVarType()));
+        addCommand(putField(getCurrentClass(),
+                variableDeclaration.getVarName().getName(),
+                variableDeclaration.getVarType()));
+    }
+
+    private String putField(String className, String fieldName, Type varType) {
+        return "putfield " + className + "/" +
+                fieldName + " " +
+                getJasminType(varType);
     }
 
     private String getClassProperty(String structName, String elementName, Type elementType) {
@@ -609,13 +617,13 @@ public class CodeGenerator extends Visitor<String> {
             return;
         }
         if (variableDeclaration.getVarType() instanceof IntType || variableDeclaration.getVarType() instanceof BoolType)
-            addCommand("iconst_0");
+            addCommand((new IntValue(0).accept(this)));
         else if (variableDeclaration.getVarType() instanceof FptrType)
             addCommand("aconst_null");
         else if (variableDeclaration.getVarType() instanceof StructType)
-            addCommand("new " + ((StructType) variableDeclaration.getVarType()).getStructName().getName());
+            addCommand(initiateClass(((StructType) variableDeclaration.getVarType()).getStructName().getName()));
         else if (variableDeclaration.getVarType() instanceof ListType)
-            addCommand("new List");
+            addCommand("new List;");
     }
 
     private String getCurrentClass() {
@@ -632,11 +640,6 @@ public class CodeGenerator extends Visitor<String> {
     }
 
     private void storeVariable(VariableDeclaration variableDeclaration) {
-        if (variableDeclaration.getVarType() instanceof IntType ||
-                variableDeclaration.getVarType() instanceof BoolType) {
-            addCommand(storePrimitive + getProperSlot(variableDeclaration.getVarName().getName()));
-            return;
-        }
         addCommand(storeObject + getProperSlot(variableDeclaration.getVarName().getName()));
     }
 
@@ -659,12 +662,16 @@ public class CodeGenerator extends Visitor<String> {
         return "invokevirtual List/getSize()I";
     }
 
+    private String invokeListSetElement() {
+        return "invokevirtual List/setElement(I;Ljava/lang/Object;)V";
+    }
+
     private String invokeValueOfBoolean() {
-        return "invokestatic java/lang/Boolean/valueOf(Z)Ljava/lang/Boolean";
+        return "invokestatic java/lang/Boolean/valueOf(Z)Ljava/lang/Boolean;";
     }
 
     private String invokeValueOfInt() {
-        return "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer";
+        return "invokestatic java/lang/Integer/valueOf(I)Ljava/lang/Integer;";
     }
 
     private String invokeIntegerToInt() {
@@ -684,11 +691,18 @@ public class CodeGenerator extends Visitor<String> {
     }
 
     private String invokeFptr() {
-        return "invokevirtual Fptr/invoke()Ljava/lang/Object";
+        return "invokevirtual Fptr/invoke()Ljava/lang/Object;";
     }
 
     private String initiateFptr() {
         return "invokespecial Fptr/<init>(Ljava/lang/Object;Ljava/lang/String;)V";
+    }
+
+    private String initiateClass(String className) {
+
+        return "new " + className + NEW_LINE +
+                "dup" + NEW_LINE +
+                "invokespecial " + className + "/<init>()V";
     }
 
     private String newFptrObject(String identifierName) {
@@ -739,5 +753,47 @@ public class CodeGenerator extends Visitor<String> {
             }
         }
         return null;
+    }
+
+    private String invokeListCopyCtor() {
+        return "invokevirtual List/<init>(LList;)V";
+    }
+
+    private String invokeNewListDup() {
+        return "new List" + NEW_LINE + "dup";
+    }
+
+    private String handleAssignExpression(Expression left, Expression right) {
+        String command = "";
+        Type rightType = right.accept(expressionTypeChecker);
+        String listTypeHandled = handleListType(rightType, right);
+        if (left instanceof StructAccess) {
+            command += ((StructAccess) left).getInstance().accept(this);
+            command += NEW_LINE;
+            Type elementType = left.accept(expressionTypeChecker);
+            StructType structType = (StructType) ((StructAccess) left).getInstance().accept(expressionTypeChecker);
+            command += listTypeHandled + NEW_LINE;
+            command += putField(structType.getStructName().getName(),
+                    ((StructAccess) left).getElement().getName(), elementType) + NEW_LINE;
+            command += left.accept(this);
+        } else if (left instanceof Identifier) {
+            command += listTypeHandled + NEW_LINE;
+            command += storeObject + getProperSlot(((Identifier) left).getName());
+        } else if (left instanceof ListAccessByIndex) {
+            command += ((ListAccessByIndex) left).getInstance().accept(this) + NEW_LINE;
+            command += ((ListAccessByIndex) left).getIndex().accept(this) + NEW_LINE;
+            command += listTypeHandled + NEW_LINE;
+            command += invokeListSetElement() + NEW_LINE;
+            command += right.accept(this);
+        }
+        return command;
+    }
+
+    private String handleListType(Type rightType, Expression right) {
+        String command = "";
+        if (rightType instanceof ListType) command += invokeNewListDup() + NEW_LINE;
+        command += right.accept(this) + NEW_LINE;
+        if (rightType instanceof ListType) command += invokeListCopyCtor();
+        return command;
     }
 }
